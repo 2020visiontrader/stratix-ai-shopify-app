@@ -19,3 +19,15 @@
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
 }
+
+:root {
+  --color-lavender-light: #F8F4F9;
+  --color-lavender-main: #C8A2C8;
+  --color-gold-accent: #EADDCA;
+  --color-neutral-dark: #333333;
+}
+
+body {
+  color: var(--color-neutral-dark);
+  background: var(--color-lavender-light);
+}

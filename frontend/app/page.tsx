@@ -6,179 +6,476 @@ import { useEffect, useState } from 'react';
 export default function HomePage() {
   const [apiStatus, setApiStatus] = useState<'loading' | 'connected' | 'error'>('loading');
   const [serverInfo, setServerInfo] = useState<any>(null);
-  const [activeSection, setActiveSection] = useState('overview');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [error, setError] = useState<string | null>(null);
+  const [chatMessage, setChatMessage] = useState('');
+  const [aiResponse, setAiResponse] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Test API connection
-    fetch('/api')
-      .then(res => res.json())
-      .then(data => {
+    const testApiConnection = async () => {
+      try {
+        setApiStatus('loading');
+        const response = await fetch('/api/health');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
         setServerInfo(data);
         setApiStatus('connected');
-      })
-      .catch(() => {
+      } catch (error) {
         setApiStatus('error');
-      });
+        setError(error instanceof Error ? error.message : 'Unknown error occurred');
+      }
+    };
+
+    testApiConnection();
+    const interval = setInterval(testApiConnection, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Modern Sidebar */}
-      <motion.div
-        initial={{ x: -300 }}
-        animate={{ x: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="fixed inset-y-0 left-0 w-72 bg-white/80 backdrop-blur-xl border-r border-white/20 shadow-xl"
-      >
-        <div className="flex flex-col h-full">
-          {/* Logo Section */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="flex items-center px-8 py-6 border-b border-gray-100/50"
-          >
-            <div className="w-12 h-12 bg-gradient-to-r from-violet-600 via-purple-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">S</span>
-            </div>
-            <div className="ml-4">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                Stratix AI
-              </h1>
-              <p className="text-sm text-gray-500">E-commerce Intelligence</p>
-            </div>
-          </motion.div>
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatMessage.trim()) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/auntmel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: chatMessage }),
+      });
+      const data = await response.json();
+      setAiResponse(data?.data?.response || 'No response received');
+    } catch (error) {
+      setAiResponse('Sorry, I encountered an error. Please try again.');
+    } finally {
+      setIsLoading(false);
+      setChatMessage('');
+    }
+  };
 
-          {/* Navigation */}
-          <nav className="flex-1 px-6 py-8 space-y-3">
-            {[
-              { id: 'overview', label: 'Overview', icon: '🏠', desc: 'Dashboard home' },
-              { id: 'analytics', label: 'Analytics', icon: '📊', desc: 'Performance insights' },
-              { id: 'campaigns', label: 'Campaigns', icon: '🚀', desc: 'Ad management' },
-              { id: 'settings', label: 'Settings', icon: '⚙️', desc: 'Configuration' }
-            ].map((item, index) => (
-              <motion.button
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
-                onClick={() => setActiveSection(item.id)}
-                className={`w-full group relative overflow-hidden rounded-xl transition-all duration-300 ${
-                  activeSection === item.id
-                    ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-purple-500/25'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
+  const tabs = [
+    { id: 'campaigns', label: 'A/B Tests', icon: '🎯' },
+    { id: 'analytics', label: 'Analytics', icon: '📊' },
+    { id: 'ai-assistant', label: 'AI Assistant', icon: '🤖' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header */}
+      <header className="border-b border-white/20 bg-white/70 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">S</span>
+                </div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                  Stratix AI
+                </h1>
+              </div>
+              <div className="hidden md:flex items-center space-x-2">
+                <div className={`h-2 w-2 rounded-full ${
+                  apiStatus === 'connected' ? 'bg-green-400' : 
+                  apiStatus === 'loading' ? 'bg-yellow-400' : 'bg-red-400'
+                }`}></div>
+                <span className="text-sm text-gray-600">
+                  {apiStatus === 'connected' ? 'Connected' : 
+                   apiStatus === 'loading' ? 'Connecting...' : 'Disconnected'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors">
+                View Docs
+              </button>
+              <button className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 transition-all duration-200">
+                Upgrade Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation Tabs */}
+        <div className="mb-8">
+          <nav className="flex space-x-1 rounded-xl bg-white/60 backdrop-blur-sm p-1 shadow-sm border border-white/20">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center space-x-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-white shadow-sm text-blue-700 border border-blue-200'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
                 }`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
               >
-                <div className="flex items-center px-4 py-4">
-                  <span className="text-2xl mr-4">{item.icon}</span>
-                  <div className="text-left">
-                    <div className="font-semibold">{item.label}</div>
-                    <div className={`text-xs ${activeSection === item.id ? 'text-purple-100' : 'text-gray-400'}`}>
-                      {item.desc}
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Content Area */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === 'campaigns' && (
+              <div className="space-y-6">
+                {/* Quick Actions */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <button className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-left shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                    <div className="relative z-10">
+                      <div className="text-3xl mb-2">🚀</div>
+                      <h3 className="text-lg font-semibold text-white mb-1">Create A/B Test</h3>
+                      <p className="text-blue-100 text-sm">Launch your first conversion test</p>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </button>
+                  
+                  <button className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-left shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                    <div className="relative z-10">
+                      <div className="text-3xl mb-2">📊</div>
+                      <h3 className="text-lg font-semibold text-white mb-1">View Analytics</h3>
+                      <p className="text-emerald-100 text-sm">Analyze performance metrics</p>
+                    </div>
+                  </button>
+                  
+                  <button className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 p-6 text-left shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+                    <div className="relative z-10">
+                      <div className="text-3xl mb-2">🎨</div>
+                      <h3 className="text-lg font-semibold text-white mb-1">Design Variants</h3>
+                      <p className="text-purple-100 text-sm">Create beautiful variations</p>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Active Campaigns */}
+                <div className="rounded-xl bg-white/70 backdrop-blur-sm border border-white/20 shadow-sm">
+                  <div className="p-6 border-b border-gray-200/50">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-semibold text-gray-900">Active A/B Tests</h2>
+                      <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      {/* Campaign Card */}
+                      <div className="rounded-lg border border-gray-200/50 bg-white/50 p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                              <span className="text-white font-semibold text-sm">HP</span>
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">Homepage Hero Test</h3>
+                              <p className="text-sm text-gray-500">Running for 12 days</p>
+                            </div>
+                          </div>
+                          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                            Active
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div>
+                            <div className="text-lg font-semibold text-gray-900">2,847</div>
+                            <div className="text-xs text-gray-500">Visitors</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold text-green-600">+12.3%</div>
+                            <div className="text-xs text-gray-500">Conversion</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold text-blue-600">94%</div>
+                            <div className="text-xs text-gray-500">Confidence</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Another Campaign Card */}
+                      <div className="rounded-lg border border-gray-200/50 bg-white/50 p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+                              <span className="text-white font-semibold text-sm">CT</span>
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">Checkout Button Test</h3>
+                              <p className="text-sm text-gray-500">Running for 8 days</p>
+                            </div>
+                          </div>
+                          <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                            Learning
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div>
+                            <div className="text-lg font-semibold text-gray-900">1,234</div>
+                            <div className="text-xs text-gray-500">Visitors</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold text-orange-600">+3.1%</div>
+                            <div className="text-xs text-gray-500">Conversion</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-semibold text-gray-600">67%</div>
+                            <div className="text-xs text-gray-500">Confidence</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                {activeSection === item.id && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute inset-0 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl"
-                    style={{ zIndex: -1 }}
-                  />
-                )}
-              </motion.button>
-            ))}
-          </nav>
+              </div>
+            )}
 
-          {/* Status & User */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.5 }}
-            className="px-6 py-6 border-t border-gray-100/50 space-y-4"
-          >
-            {/* API Status */}
-            <div className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-              apiStatus === 'connected'
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-              apiStatus === 'error'
-                ? 'bg-red-50 text-red-700 border border-red-200' :
-                'bg-amber-50 text-amber-700 border border-amber-200'
-            }`}>
-              <div className="flex items-center">
-                <div className={`w-2 h-2 rounded-full mr-3 ${
-                  apiStatus === 'connected' ? 'bg-emerald-500 animate-pulse' :
-                  apiStatus === 'error' ? 'bg-red-500' : 'bg-amber-500 animate-pulse'
-                }`}></div>
-                {apiStatus === 'connected' ? 'System Online' :
-                 apiStatus === 'error' ? 'Connection Error' :
-                 'Connecting...'}
-              </div>
-            </div>
+            {activeTab === 'analytics' && (
+              <div className="space-y-6">
+                {/* Stats Overview */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="rounded-xl bg-white/70 backdrop-blur-sm border border-white/20 p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Tests</p>
+                        <p className="text-2xl font-bold text-gray-900">24</p>
+                      </div>
+                      <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <span className="text-xl">🎯</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center text-sm">
+                      <span className="text-green-600">+12%</span>
+                      <span className="text-gray-500 ml-1">from last month</span>
+                    </div>
+                  </div>
 
-            {/* User Profile */}
-            <div className="flex items-center px-4 py-3 bg-gray-50/50 rounded-xl">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">P</span>
+                  <div className="rounded-xl bg-white/70 backdrop-blur-sm border border-white/20 p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Avg. Lift</p>
+                        <p className="text-2xl font-bold text-green-600">+18.4%</p>
+                      </div>
+                      <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
+                        <span className="text-xl">📈</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center text-sm">
+                      <span className="text-green-600">+3.2%</span>
+                      <span className="text-gray-500 ml-1">from last month</span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl bg-white/70 backdrop-blur-sm border border-white/20 p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Revenue Impact</p>
+                        <p className="text-2xl font-bold text-gray-900">$142K</p>
+                      </div>
+                      <div className="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <span className="text-xl">💰</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center text-sm">
+                      <span className="text-green-600">+24%</span>
+                      <span className="text-gray-500 ml-1">from last month</span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl bg-white/70 backdrop-blur-sm border border-white/20 p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                        <p className="text-2xl font-bold text-gray-900">87%</p>
+                      </div>
+                      <div className="h-12 w-12 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <span className="text-xl">✅</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center text-sm">
+                      <span className="text-green-600">+5%</span>
+                      <span className="text-gray-500 ml-1">from last month</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chart Placeholder */}
+                <div className="rounded-xl bg-white/70 backdrop-blur-sm border border-white/20 p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Trends</h3>
+                  <div className="h-64 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-4xl mb-2">📊</div>
+                      <p className="text-gray-600">Analytics chart would be displayed here</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="ml-3">
-                <div className="font-semibold text-gray-900 text-sm">Peter</div>
-                <div className="text-xs text-gray-500">Admin</div>
+            )}
+
+            {activeTab === 'ai-assistant' && (
+              <div className="space-y-6">
+                <div className="rounded-xl bg-white/70 backdrop-blur-sm border border-white/20 shadow-sm">
+                  <div className="p-6 border-b border-gray-200/50">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+                        <span className="text-white text-lg">🤖</span>
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-gray-900">Aunt Mel AI Assistant</h2>
+                        <p className="text-sm text-gray-600">Your AI-powered optimization expert</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6">
+                    {/* Chat Interface */}
+                    <div className="space-y-4">
+                      {aiResponse && (
+                        <div className="rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border border-blue-200/50">
+                          <div className="flex items-start space-x-3">
+                            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-sm">AI</span>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-gray-800">{aiResponse}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <form onSubmit={handleChatSubmit} className="space-y-4">
+                        <div>
+                          <textarea
+                            value={chatMessage}
+                            onChange={(e) => setChatMessage(e.target.value)}
+                            placeholder="Ask Aunt Mel about optimization strategies, A/B test ideas, or performance insights..."
+                            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none bg-white/50 backdrop-blur-sm"
+                            rows={3}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2 text-xs text-gray-500">
+                            <span className="flex items-center space-x-1">
+                              <div className={`h-2 w-2 rounded-full ${apiStatus === 'connected' ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                              <span>{apiStatus === 'connected' ? 'AI Ready' : 'AI Offline'}</span>
+                            </span>
+                          </div>
+                          <button
+                            type="submit"
+                            disabled={isLoading || !chatMessage.trim() || apiStatus !== 'connected'}
+                            className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2 text-sm font-medium text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                          >
+                            {isLoading ? 'Thinking...' : 'Ask Aunt Mel'}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick AI Suggestions */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button 
+                    onClick={() => setChatMessage("What A/B tests should I run for my e-commerce store?")}
+                    className="text-left rounded-lg bg-white/50 border border-gray-200/50 p-4 hover:bg-white/70 transition-colors"
+                  >
+                    <div className="text-lg mb-1">💡</div>
+                    <h3 className="font-medium text-gray-900 mb-1">A/B Test Ideas</h3>
+                    <p className="text-sm text-gray-600">Get personalized test recommendations</p>
+                  </button>
+                  
+                  <button 
+                    onClick={() => setChatMessage("Analyze my conversion funnel and suggest improvements")}
+                    className="text-left rounded-lg bg-white/50 border border-gray-200/50 p-4 hover:bg-white/70 transition-colors"
+                  >
+                    <div className="text-lg mb-1">🔍</div>
+                    <h3 className="font-medium text-gray-900 mb-1">Funnel Analysis</h3>
+                    <p className="text-sm text-gray-600">Identify optimization opportunities</p>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <div className="space-y-6">
+                <div className="rounded-xl bg-white/70 backdrop-blur-sm border border-white/20 shadow-sm">
+                  <div className="p-6 border-b border-gray-200/50">
+                    <h2 className="text-lg font-semibold text-gray-900">System Settings</h2>
+                    <p className="text-sm text-gray-600 mt-1">Configure your Stratix AI platform</p>
+                  </div>
+                  
+                  <div className="p-6 space-y-6">
+                    {/* API Status */}
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900 mb-3">API Status</h3>
+                      <div className="rounded-lg bg-gray-50/50 p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className={`h-3 w-3 rounded-full ${
+                              apiStatus === 'connected' ? 'bg-green-400' : 
+                              apiStatus === 'loading' ? 'bg-yellow-400' : 'bg-red-400'
+                            }`}></div>
+                            <span className="text-sm font-medium">
+                              Backend API: {apiStatus === 'connected' ? 'Connected' : 
+                                          apiStatus === 'loading' ? 'Connecting...' : 'Disconnected'}
+                            </span>
+                          </div>
+                          <button className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                            Test Connection
+                          </button>
+                        </div>
+                        {serverInfo && (
+                          <div className="mt-3 text-xs text-gray-600">
+                            <div>Service: {serverInfo.data?.service}</div>
+                            <div>Version: {serverInfo.data?.version}</div>
+                            <div>Environment: {serverInfo.data?.environment}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Feature Toggles */}
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900 mb-3">Features</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between py-2">
+                          <span className="text-sm text-gray-700">Real-time Analytics</span>
+                          <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
+                            <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6"></span>
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between py-2">
+                          <span className="text-sm text-gray-700">AI Recommendations</span>
+                          <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
+                            <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6"></span>
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between py-2">
+                          <span className="text-sm text-gray-700">Email Notifications</span>
+                          <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors">
+                            <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
-        </div>
-      </motion.div>
-
-      {/* Main Content */}
-      <main className="ml-72 min-h-screen">
-        <div className="relative">
-          {/* Header Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-gray-100/50 px-8 py-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {activeSection === 'overview' && 'Dashboard Overview'}
-                  {activeSection === 'analytics' && 'Performance Analytics'}
-                  {activeSection === 'campaigns' && 'Campaign Generator'}
-                  {activeSection === 'settings' && 'Settings'}
-                </h1>
-                <p className="text-gray-500 mt-1">
-                  {activeSection === 'overview' && 'Welcome back, Peter. Here\'s what\'s happening with your store.'}
-                  {activeSection === 'analytics' && 'Track your performance and optimize with AI insights.'}
-                  {activeSection === 'campaigns' && 'Create and manage high-converting campaigns.'}
-                  {activeSection === 'settings' && 'Configure your platform preferences.'}
-                </p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-medium shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all"
-                >
-                  ✨ Generate
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Content Area */}
-          <div className="px-8 py-8">
-            <AnimatePresence mode="wait">
-              {activeSection === 'overview' && <DashboardOverview serverInfo={serverInfo} />}
-              {activeSection === 'analytics' && <AnalyticsSection />}
-              {activeSection === 'campaigns' && <CampaignsSection />}
-              {activeSection === 'settings' && <SettingsSection />}
-            </AnimatePresence>
-          </div>
-        </div>
-      </main>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

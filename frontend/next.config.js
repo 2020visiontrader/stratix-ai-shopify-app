@@ -2,7 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   },
@@ -13,7 +12,7 @@ const nextConfig = {
         destination: 'http://localhost:3001/api/:path*',
       },
     ];
-  },
+  }
 };
 
 module.exports = nextConfig;

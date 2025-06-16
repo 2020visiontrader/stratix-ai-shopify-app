@@ -1,78 +1,92 @@
-# 🚀 Stratix AI - E-commerce Optimization Platform
+# Stratix AI - Shopify App
 
-## Overview
-Stratix AI is a complete enterprise e-commerce optimization platform with **75 advanced features** including AI-powered content generation, automated A/B testing, admin controls, partner collaboration, and intelligent billing systems.
+A powerful AI-powered e-commerce optimization platform for Shopify stores.
 
-## 🏗️ Architecture
-- **Backend**: Node.js + Express + TypeScript
-- **Frontend**: Next.js + React + Tailwind CSS
-- **Database**: Supabase (PostgreSQL)
-- **AI**: OpenAI GPT-4 with custom fine-tuning
+## Project Structure
 
-## 📋 Prerequisites
-- Node.js 18+
-- npm or yarn
-- Git
-
-## 🚀 Quick Start
-
-### 1. Start Backend Server
-```bash
-cd backend
-node server.js
 ```
-Server starts on `http://localhost:3001`
+stratix-ai/
+├── frontend/           # Next.js frontend application
+│   ├── src/           # Frontend source code
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── layout/
+│   │   ├── lib/
+│   │   ├── pages/
+│   │   ├── scripts/
+│   │   ├── types/
+│   │   └── utils/
+│   └── package.json
+├── backend/           # Express.js backend server
+│   ├── src/          # Backend source code
+│   │   ├── api/
+│   │   ├── config/
+│   │   ├── db/
+│   │   ├── integrations/
+│   │   ├── middleware/
+│   │   └── services/
+│   ├── server.js
+│   └── package.json
+├── shared/           # Shared types and utilities
+│   ├── src/
+│   │   └── types.ts
+│   └── package.json
+└── package.json      # Root package.json for workspace management
+```
 
-### 2. Start Frontend (Optional)
+## Setup
+
+1. Install dependencies:
 ```bash
-cd frontend
 npm install
-npm run dev
-```
-Frontend starts on `http://localhost:3000`
+   ```
 
-## 🌐 API Endpoints
+2. Set up environment variables:
+   - Copy `.env.example` to `.env` in both frontend and backend directories
+   - Fill in the required environment variables
 
-### Core Endpoints
-- `GET /health` - Health check
-- `GET /` - Server info
-- `POST /api/auntmel` - AI assistant chat
-- `GET /api/brand` - Brand configuration
-- `GET /api/admin/feature-flags` - Feature management
-- `GET /api/admin/queue-monitor/stats` - Queue monitoring
-- `GET /api/partners` - Partner management
+3. Start development servers:
+   ```bash
+   # Start both frontend and backend
+   npm run dev
 
-## 🧪 Testing
-1. **Health Check**: Visit `http://localhost:3001/health`
-2. **API Test**: Use curl or Postman to test endpoints
-3. **Frontend**: Visit `http://localhost:3000` (if running)
+   # Start only frontend
+   npm run dev:frontend
 
-## 🔧 Configuration
-Create `.env` file in backend directory:
-```env
-OPENAI_API_KEY=your_openai_key
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_key
-```
+   # Start only backend
+   npm run dev:backend
+   ```
 
-## 📊 Features
-✅ **75/75 Features Implemented**
-- AI Assistant (Aunt Mel)
-- A/B Testing Lab
-- Admin Controls
-- Partner Collaboration
-- Smart Billing
-- Real-time Analytics
-- Content Generation
-- SEO Optimization
+## Development
 
-## 🎯 Production Ready
-- Complete TypeScript backend
-- React frontend with Tailwind CSS
-- Supabase database integration
-- OpenAI API integration
-- Enterprise-grade features
+- Frontend runs on: http://localhost:3000
+- Backend runs on: http://localhost:3001
+- API documentation: http://localhost:3001/api/docs
 
----
+## Features
 
-**🚀 Stratix AI - Ready for Launch!**
+- AI-powered product optimization
+- Automated ad generation
+- Brand configuration
+- Analytics dashboard
+- Shopify integration
+- Real-time insights
+
+## Tech Stack
+
+- Frontend: Next.js, React, TypeScript
+- Backend: Express.js, Node.js, TypeScript
+- Database: Supabase
+- AI: OpenAI
+- Authentication: JWT
+- API Documentation: OpenAPI/Swagger
+
+## Contributing
+
+1. Create a new branch for your feature
+2. Make your changes
+3. Submit a pull request
+
+## License
+
+MIT

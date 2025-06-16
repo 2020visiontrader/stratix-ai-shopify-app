@@ -1,96 +1,117 @@
-export interface BrandDNA {
+// Stratix AI Platform - Core Type Definitions
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Campaign {
+  id: string;
+  name: string;
+  status: 'draft' | 'active' | 'paused' | 'completed';
+  type: 'ab_test' | 'multivariate' | 'split_url';
+  variants: Variant[];
+  metrics: CampaignMetrics;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Variant {
+  id: string;
+  name: string;
+  description?: string;
+  content: VariantContent;
+  traffic: number; // percentage
+  conversions: number;
+  visitors: number;
+  conversionRate: number;
+}
+
+export interface VariantContent {
+  headline?: string;
+  description?: string;
+  buttonText?: string;
+  imageUrl?: string;
+  customCode?: string;
+}
+
+export interface CampaignMetrics {
+  totalVisitors: number;
+  totalConversions: number;
+  conversionRate: number;
+  confidenceLevel: number;
+  statisticalSignificance: boolean;
+  revenue?: number;
+  averageOrderValue?: number;
+}
+
+export interface ABTestResult {
+  campaignId: string;
+  winner?: string;
+  winnerConfidence: number;
+  improvementPercentage: number;
+  recommendedAction: 'continue' | 'conclude' | 'extend';
+}
+
+export interface AuntMelResponse {
+  response: string;
+  suggestions: string[];
+  confidence: number;
+  processingTime: number;
+  timestamp: string;
+}
+
+export interface APIResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+  timestamp: string;
+}
+
+export interface SystemHealth {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  service: string;
+  version: string;
+  environment: string;
+  uptime: number;
+  memory: {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+    arrayBuffers: number;
+  };
+  cpu: {
+    user: number;
+    system: number;
+  };
+  nodeVersion: string;
+  features: {
+    security: string;
+    cors: string;
+    logging: string;
+    errorHandling: string;
+    healthMonitoring: string;
+  };
+}
+
+export interface BrandConfiguration {
   id: string;
   name: string;
   industry: string;
-  target_audience: string[];
-  brand_voice: {
-    tone: string;
-    style: string;
-    keywords: string[];
-  };
-  visual_identity: {
-    colors: string[];
-    typography: string[];
-    imagery: string[];
-  };
-  marketing_strategy: {
-    objectives: string[];
-    channels: string[];
-    key_messages: string[];
-  };
-  conversion_goals: {
+  targetAudience: string;
+  brandVoice: string;
+  primaryColors: string[];
+  secondaryColors?: string[];
+  fonts?: {
     primary: string;
-    secondary: string[];
-    metrics: {
-      name: string;
-      target: number;
-      unit: string;
-    }[];
+    secondary: string;
   };
-  created_at: Date;
-  updated_at: Date;
+  logoUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
-
-export interface AIAnalysisResult {
-  brandVoice: {
-    tone: string;
-    style: string;
-    keywords: string[];
-  };
-  targetAudience: string[];
-  marketingStrategy: {
-    objectives: string[];
-    channels: string[];
-    keyMessages: string[];
-  };
-  visualIdentity: {
-    colors: string[];
-    typography: string[];
-    imagery: string[];
-  };
-  confidence: number;
-  suggestions: string[];
-  warnings: string[];
-}
-
-export interface DatabaseError {
-  code: string;
-  message: string;
-  details?: string;
-}
-
-export interface DatabaseResponse<T> {
-  data: T | null;
-  error: DatabaseError | null;
-}
-
-export interface ExtractedBrandData {
-  rawText: string;
-  sections: {
-    title: string;
-    content: string;
-    confidence: number;
-    relevance: number;
-  }[];
-  metadata: {
-    documentType: string;
-    processingDate: Date;
-    wordCount: number;
-    keyPhrases: string[];
-  };
-}
-
-export interface OpenAIConfig {
-  model: string;
-  temperature: number;
-  maxTokens: number;
-  topP: number;
-  frequencyPenalty: number;
-  presencePenalty: number;
-}
-
-export interface DatabaseConfig {
-  supabaseUrl: string;
-  supabaseKey: string;
-  schema: string;
-} 

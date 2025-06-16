@@ -1,8 +1,20 @@
 #!/bin/bash
 
-# Stratix AI - Startup Script
+# Stratix AI - Enhanced Startup Script
 echo "🚀 Starting Stratix AI Platform"
 echo "==============================="
+
+# Set error handling
+set -e
+
+# Load environment variables
+if [ -f ".env.development" ]; then
+    export $(grep -v '^#' .env.development | xargs)
+    echo "✅ Loaded development environment"
+elif [ -f ".env" ]; then
+    export $(grep -v '^#' .env | xargs)
+    echo "✅ Loaded default environment"
+fi
 
 # Check if Node.js is available
 if ! command -v node &> /dev/null; then
@@ -10,24 +22,88 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-echo "✅ Node.js $(node -v) detected"
+NODE_VERSION=$(node -v)
+echo "✅ Node.js $NODE_VERSION detected"
 
-# Function to start backend
+# Validate Node.js version (18+)
+NODE_MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f1 | sed 's/v//')
+if [ "$NODE_MAJOR_VERSION" -lt 18 ]; then
+    echo "⚠️  Warning: Node.js 18+ recommended. Current version: $NODE_VERSION"
+fi
+
+# Function to check if port is available
+check_port() {
+    local port=$1
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+# Function to wait for server to be ready
+wait_for_server() {
+    local url=$1
+    local timeout=${2:-30}
+    local counter=0
+    
+    echo "⏳ Waiting for server to be ready..."
+    
+    while [ $counter -lt $timeout ]; do
+        if curl -s "$url" >/dev/null 2>&1; then
+            echo "✅ Server is ready!"
+            return 0
+        fi
+        sleep 1
+        counter=$((counter + 1))
+        printf "."
+    done
+    
+    echo ""
+    echo "⚠️  Server took too long to start"
+    return 1
+}
+
+# Function to install dependencies if needed
+install_dependencies() {
+    local dir=$1
+    local service_name=$2
+    
+    if [ ! -d "$dir/node_modules" ]; then
+        echo "📦 Installing $service_name dependencies..."
+        cd "$dir"
+        npm install --silent
+        if [ $? -eq 0 ]; then
+            echo "✅ $service_name dependencies installed"
+        else
+            echo "❌ Failed to install $service_name dependencies"
+            exit 1
+        fi
+        cd - > /dev/null
+    else
+        echo "✅ $service_name dependencies already installed"
+    fi
+}
+
+# Function to start backend with enhanced features
 start_backend() {
     echo ""
     echo "🔧 Starting Stratix Backend..."
     echo "📍 Backend will be available at: http://localhost:3001"
     echo "🏥 Health check: http://localhost:3001/health"
+    echo "📚 API Docs: http://localhost:3001/api/docs"
     echo ""
-    cd backend
     
-    # Check if dependencies are installed
-    if [ ! -d "node_modules" ]; then
-        echo "📦 Installing backend dependencies..."
-        npm install
+    # Check if port is already in use
+    if ! check_port 3001; then
+        echo "⚠️  Port 3001 is already in use. Please stop the existing service or use a different port."
+        exit 1
     fi
     
-    echo "🚀 Starting server..."
+    # Install dependencies
+    install_dependencies "." "backend"
+    
+    echo "🚀 Starting enhanced server with security features..."
     node server.js
 }
 
