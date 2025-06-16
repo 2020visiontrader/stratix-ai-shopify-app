@@ -232,7 +232,7 @@ export class BrandDNA {
     const data = {
       guidelines: Array.from(this.guidelines.entries()),
       checks: Array.from(this.checks.entries()),
-      lastUpdate: this.lastUpdate,
+      lastUpdate: this.lastUpdate.getTime(),
     };
     return JSON.stringify(data);
   }

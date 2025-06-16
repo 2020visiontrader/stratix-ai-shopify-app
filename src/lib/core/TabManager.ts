@@ -276,10 +276,10 @@ export class TabManager {
 
   public async exportData(): Promise<string> {
     const data = {
-      tabs: Array.from(this.tabs.values()),
+      tabs: Array.from(this.tabs.entries()),
       events: Object.fromEntries(this.events),
       activeTabs: Object.fromEntries(this.activeTabs),
-      lastUpdate: this.lastUpdate
+      lastUpdate: this.lastUpdate.getTime()
     };
     return JSON.stringify(data, null, 2);
   }
@@ -292,7 +292,7 @@ export class TabManager {
       );
       this.events = new Map(Object.entries(parsedData.events));
       this.activeTabs = new Map(Object.entries(parsedData.activeTabs));
-      this.lastUpdate = parsedData.lastUpdate;
+      this.lastUpdate = new Date(parsedData.lastUpdate);
     } catch (error) {
       console.error('Failed to import tab manager data:', error);
       throw error;

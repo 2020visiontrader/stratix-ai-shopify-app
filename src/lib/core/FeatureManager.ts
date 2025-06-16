@@ -66,7 +66,7 @@ export class FeatureManager {
   public async exportData(): Promise<string> {
     const data = {
       features: Array.from(this.features.entries()),
-      lastUpdate: this.lastUpdate,
+      lastUpdate: this.lastUpdate.getTime(),
     };
     return JSON.stringify(data);
   }

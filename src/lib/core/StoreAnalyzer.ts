@@ -52,7 +52,7 @@ export class StoreAnalyzer {
   public async exportData(): Promise<string> {
     const data = {
       metrics: Array.from(this.metrics.entries()),
-      lastUpdate: this.lastUpdate,
+      lastUpdate: this.lastUpdate.getTime(),
     };
     return JSON.stringify(data);
   }

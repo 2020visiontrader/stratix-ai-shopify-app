@@ -261,9 +261,8 @@ export class ConfigManager {
 
   public async exportData(): Promise<string> {
     const data = {
-      configs: Array.from(this.configs.values()),
-      results: Object.fromEntries(this.results),
-      lastUpdate: this.lastUpdate
+      config: Array.from(this.configs.entries()),
+      lastUpdate: this.lastUpdate.getTime(),
     };
     return JSON.stringify(data, null, 2);
   }
@@ -272,10 +271,10 @@ export class ConfigManager {
     try {
       const parsedData = JSON.parse(data);
       this.configs = new Map(
-        parsedData.configs.map((c: Config) => [c.id, c])
+        parsedData.config.map((c: Config) => [c.id, c])
       );
       this.results = new Map(Object.entries(parsedData.results));
-      this.lastUpdate = parsedData.lastUpdate;
+      this.lastUpdate = new Date(parsedData.lastUpdate);
     } catch (error) {
       console.error('Failed to import config manager data:', error);
       throw error;

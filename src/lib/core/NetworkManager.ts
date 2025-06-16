@@ -8,6 +8,7 @@ export class NetworkManager {
   private static instance: NetworkManager;
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private lastUpdate: Date;
 
   private constructor() {
     // Initialize axios instance with default config
@@ -89,5 +90,21 @@ export class NetworkManager {
 
   public removeFromCache(key: string): void {
     this.cache.delete(key);
+  }
+
+  public exportData(): { cache: Array<[string, { data: any; timestamp: number }]>; lastUpdate: number } {
+    const data = {
+      cache: Array.from(this.cache.entries()),
+      lastUpdate: this.lastUpdate.getTime(),
+    };
+    return data;
+  }
+
+  public importData(data: { cache: Array<[string, { data: any; timestamp: number }]>; lastUpdate: number }): void {
+    this.cache.clear();
+    data.cache.forEach(([key, value]) => {
+      this.cache.set(key, value);
+    });
+    this.lastUpdate = new Date(data.lastUpdate);
   }
 } 

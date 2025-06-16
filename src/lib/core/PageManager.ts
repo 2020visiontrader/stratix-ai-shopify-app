@@ -267,10 +267,10 @@ export class PageManager {
 
   public async exportData(): Promise<string> {
     const data = {
-      pages: Array.from(this.pages.values()),
+      pages: Array.from(this.pages.entries()),
       events: Object.fromEntries(this.events),
       currentPage: this.currentPage,
-      lastUpdate: this.lastUpdate
+      lastUpdate: this.lastUpdate.getTime()
     };
     return JSON.stringify(data, null, 2);
   }
@@ -283,7 +283,7 @@ export class PageManager {
       );
       this.events = new Map(Object.entries(parsedData.events));
       this.currentPage = parsedData.currentPage;
-      this.lastUpdate = parsedData.lastUpdate;
+      this.lastUpdate = new Date(parsedData.lastUpdate);
     } catch (error) {
       console.error('Failed to import page manager data:', error);
       throw error;

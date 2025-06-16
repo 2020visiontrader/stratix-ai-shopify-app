@@ -53,7 +53,7 @@ export class LayoutManager {
   public async exportData(): Promise<string> {
     const data = {
       layouts: Array.from(this.layouts.entries()),
-      lastUpdate: this.lastUpdate,
+      lastUpdate: this.lastUpdate.getTime(),
     };
     return JSON.stringify(data);
   }

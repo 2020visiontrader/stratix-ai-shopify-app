@@ -61,6 +61,7 @@ export class ABTestEngine {
   private tests: Map<string, TestConfig> = new Map();
   private results: Map<string, TestResult> = new Map();
   private activeTests: Set<string> = new Set();
+  private lastUpdate: Date;
 
   private constructor() {
     this.networkManager = NetworkManager.getInstance();
@@ -268,6 +269,7 @@ export class ABTestEngine {
       tests: Array.from(this.tests.entries()),
       results: Array.from(this.results.entries()),
       activeTests: Array.from(this.activeTests),
+      lastUpdate: this.lastUpdate.getTime(),
     };
     return JSON.stringify(data);
   }
@@ -277,5 +279,6 @@ export class ABTestEngine {
     this.tests = new Map(data.tests);
     this.results = new Map(data.results);
     this.activeTests = new Set(data.activeTests);
+    this.lastUpdate = new Date(data.lastUpdate);
   }
 } 
