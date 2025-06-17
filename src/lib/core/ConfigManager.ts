@@ -1,51 +1,21 @@
-import { NetworkManager } from '../../../frontend/src/utils/network';
-
-interface Config {
-  id: string;
-  key: string;
-  value: any;
-  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
-  metadata: {
-    created: number;
-    updated: number;
-    version: string;
-    description: string;
-    tags: string[];
-  };
-  validation: {
-    required: boolean;
-    pattern?: string;
-    min?: number;
-    max?: number;
-    enum?: any[];
-  };
-}
-
-interface ConfigResult {
-  configId: string;
-  timestamp: number;
-  operation: 'get' | 'set' | 'delete' | 'validate';
-  success: boolean;
-  value?: any;
-  error?: string;
-  metadata: {
-    processingTime: number;
-    source: string;
-  };
-}
+import { NetworkManager } from '@/lib/core/NetworkManager';
+import { Config, ConfigResult, ConfigType, ConfigValue, ManagerState } from './CoreTypes';
 
 export class ConfigManager {
   private static instance: ConfigManager;
   private networkManager: NetworkManager;
   private configs: Map<string, Config>;
   private results: Map<string, ConfigResult[]>;
-  private lastUpdate: number;
+  private state: ManagerState = {
+    lastUpdate: new Date(),
+    version: '1.0.0',
+    status: 'active'
+  };
 
   private constructor() {
     this.networkManager = NetworkManager.getInstance();
     this.configs = new Map();
     this.results = new Map();
-    this.lastUpdate = Date.now();
   }
 
   public static getInstance(): ConfigManager {
@@ -57,7 +27,7 @@ export class ConfigManager {
 
   public async set(
     key: string,
-    value: any,
+    value: ConfigValue,
     options: Partial<Omit<Config, 'id' | 'key' | 'value'>> = {}
   ): Promise<Config> {
     try {
@@ -85,7 +55,7 @@ export class ConfigManager {
 
       this.validateConfig(config);
       this.configs.set(config.id, config);
-      this.lastUpdate = Date.now();
+      this.state.lastUpdate = new Date();
 
       // Record operation
       const result: ConfigResult = {
@@ -108,11 +78,11 @@ export class ConfigManager {
     }
   }
 
-  private inferType(value: any): Config['type'] {
+  private inferType(value: ConfigValue): ConfigType {
     if (Array.isArray(value)) return 'array';
     if (value === null || value === undefined) return 'string';
     if (typeof value === 'object') return 'object';
-    return typeof value as Config['type'];
+    return typeof value as ConfigType;
   }
 
   private validateConfig(config: Config): void {
@@ -158,7 +128,7 @@ export class ConfigManager {
     }
   }
 
-  private validateType(value: any, type: Config['type']): boolean {
+  private validateType(value: ConfigValue, type: ConfigType): boolean {
     switch (type) {
       case 'string':
         return typeof value === 'string';
@@ -175,7 +145,7 @@ export class ConfigManager {
     }
   }
 
-  public async get(key: string): Promise<any> {
+  public async get(key: string): Promise<ConfigValue> {
     const config = Array.from(this.configs.values()).find(c => c.key === key);
     if (!config) {
       throw new Error(`Config not found: ${key}`);
@@ -204,7 +174,7 @@ export class ConfigManager {
     }
 
     this.configs.delete(config.id);
-    this.lastUpdate = Date.now();
+    this.state.lastUpdate = new Date();
 
     const result: ConfigResult = {
       configId: config.id,
@@ -229,7 +199,7 @@ export class ConfigManager {
     return Array.from(this.configs.values());
   }
 
-  public async getConfigsByType(type: Config['type']): Promise<Config[]> {
+  public async getConfigsByType(type: ConfigType): Promise<Config[]> {
     return Array.from(this.configs.values()).filter(
       config => config.type === type
     );
@@ -245,54 +215,27 @@ export class ConfigManager {
     );
   }
 
-  public async validateConfig(key: string): Promise<boolean> {
-    const config = Array.from(this.configs.values()).find(c => c.key === key);
-    if (!config) {
-      throw new Error(`Config not found: ${key}`);
-    }
+  public getLastUpdate(): Date {
+    return this.state.lastUpdate;
+  }
 
-    try {
-      this.validateConfig(config);
-      return true;
-    } catch (error) {
-      return false;
-    }
+  public getState(): ManagerState {
+    return { ...this.state };
   }
 
   public async exportData(): Promise<string> {
     const data = {
-      config: Array.from(this.configs.entries()),
-      lastUpdate: this.lastUpdate.getTime(),
+      configs: Array.from(this.configs.entries()),
+      results: Array.from(this.results.entries()),
+      state: this.state
     };
-    return JSON.stringify(data, null, 2);
+    return JSON.stringify(data);
   }
 
-  public async importData(data: string): Promise<void> {
-    try {
-      const parsedData = JSON.parse(data);
-      this.configs = new Map(
-        parsedData.config.map((c: Config) => [c.id, c])
-      );
-      this.results = new Map(Object.entries(parsedData.results));
-      this.lastUpdate = new Date(parsedData.lastUpdate);
-    } catch (error) {
-      console.error('Failed to import config manager data:', error);
-      throw error;
-    }
-  }
-
-  public getLastUpdate(): number {
-    return this.lastUpdate;
-  }
-
-  public getConfigCount(): number {
-    return this.configs.size;
-  }
-
-  public getResultCount(): number {
-    return Array.from(this.results.values()).reduce(
-      (sum, results) => sum + results.length,
-      0
-    );
+  public async importData(dataJson: string): Promise<void> {
+    const data = JSON.parse(dataJson);
+    this.configs = new Map(data.configs);
+    this.results = new Map(data.results);
+    this.state = data.state;
   }
 } 

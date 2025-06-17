@@ -1,0 +1,420 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  plan      String   @default("free") // free, pro, enterprise
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  brands     Brand[]
+  campaigns  Campaign[]
+  settings   Settings[]
+  
+  @@map("users")
+}
+
+// Brand DNA and Configuration
+model Brand {
+  id      String @id @default(cuid())
+  userId  String
+  name    String
+  
+  // Brand DNA fields
+  brandVoice Json // { tone, personality[], communication_style }
+  targetAudience Json // { demographics[], psychographics[], pain_points[] }
+  visualIdentity Json // { primary_colors[], secondary_colors[], fonts[] }
+  contentStrategy Json // { themes[], messaging_pillars[], content_types[] }
+  positioning Json // { market_position, value_proposition, differentiators[] }
+  tonePreferences Json? // { preferred_words[], avoid_words[] }
+  
+  // Additional brand configuration
+  industry String?
+  logoUrl String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns Campaign[]
+  evolutionLogs EvolutionLog[]
+  abTests ABTest[]
+  contentOptimizations ContentOptimization[]
+  
+  @@map("brands")
+}
+
+// A/B Testing and Campaign Management
+model Campaign {
+  id     String @id @default(cuid())
+  userId String
+  brandId String?
+  name   String
+  status String @default("draft") // draft, active, paused, completed
+  type   String // ab_test, multivariate, split_url
+  
+  // Campaign configuration
+  variants Json // Array of variant configurations
+  metrics Json // Campaign performance metrics
+  settings Json? // Campaign-specific settings
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand Brand? @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  abTests ABTest[]
+  
+  @@map("campaigns")
+}
+
+// A/B Test Results
+model ABTest {
+  id String @id @default(cuid())
+  campaignId String
+  brandId String?
+  
+  name String
+  status String @default("running") // running, completed, stopped
+  
+  // Test configuration
+  variants Json // Test variants with traffic allocation
+  metrics Json // Performance metrics
+  results Json? // Test results and statistical analysis
+  
+  // Test parameters
+  trafficAllocation Float @default(1.0)
+  confidenceLevel Float @default(0.95)
+  minimumSampleSize Int @default(1000)
+  
+  startDate DateTime @default(now())
+  endDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  brand Brand? @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  
+  @@map("ab_tests")
+}
+
+// AI Evolution and Learning
+model EvolutionLog {
+  id String @id @default(cuid())
+  brandId String
+  
+  timestamp DateTime @default(now())
+  type String // learning, optimization, adaptation
+  trigger Json // What triggered this evolution
+  changes Json // What changes were made
+  metrics Json // Performance metrics before/after
+  
+  // AI learning data
+  confidence Float?
+  impact String? // high, medium, low
+  category String? // content, design, targeting, etc.
+  
+  createdAt DateTime @default(now())
+
+  // Relations
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  
+  @@map("evolution_logs")
+}
+
+// Content Optimization
+model ContentOptimization {
+  id String @id @default(cuid())
+  brandId String
+  
+  contentType String // headline, description, cta, image, etc.
+  originalContent String
+  optimizedContent String
+  
+  // Optimization metrics
+  performanceGain Float? // Percentage improvement
+  confidence Float?
+  testDuration Int? // Duration in hours
+  sampleSize Int?
+  
+  // AI analysis
+  reasoning String? // Why this optimization was suggested
+  aiModel String? // Which AI model was used
+  
+  status String @default("active") // active, archived, reverted
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  
+  @@map("content_optimizations")
+}
+
+// Shopify Integration
+model ShopifyStore {
+  id String @id @default(cuid())
+  shopDomain String @unique
+  accessToken String
+  
+  // Store information
+  storeName String?
+  storeEmail String?
+  planName String?
+  
+  // Integration settings
+  isActive Boolean @default(true)
+  webhooksConfigured Boolean @default(false)
+  lastSync DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  products ShopifyProduct[]
+  orders ShopifyOrder[]
+  customers ShopifyCustomer[]
+  
+  @@map("shopify_stores")
+}
+
+model ShopifyProduct {
+  id String @id @default(cuid())
+  shopifyId String
+  storeId String
+  
+  title String
+  description String?
+  handle String?
+  productType String?
+  vendor String?
+  
+  // Product data
+  variants Json? // Product variants
+  images Json? // Product images
+  options Json? // Product options
+  tags String[]
+  
+  // SEO and optimization
+  seoTitle String?
+  seoDescription String?
+  
+  // Pricing
+  price Float?
+  compareAtPrice Float?
+  
+  status String @default("active") // active, archived, draft
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  store ShopifyStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  
+  @@unique([shopifyId, storeId])
+  @@map("shopify_products")
+}
+
+model ShopifyOrder {
+  id String @id @default(cuid())
+  shopifyId String
+  storeId String
+  customerId String?
+  
+  // Order details
+  orderNumber String?
+  totalPrice Float
+  subtotalPrice Float?
+  totalTax Float?
+  currency String @default("USD")
+  
+  // Order data
+  lineItems Json // Order line items
+  shippingAddress Json?
+  billingAddress Json?
+  
+  // Status
+  financialStatus String? // paid, pending, refunded, etc.
+  fulfillmentStatus String? // fulfilled, partial, unfulfilled
+  
+  processedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  store ShopifyStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer ShopifyCustomer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  
+  @@unique([shopifyId, storeId])
+  @@map("shopify_orders")
+}
+
+model ShopifyCustomer {
+  id String @id @default(cuid())
+  shopifyId String
+  storeId String
+  
+  // Customer information
+  firstName String?
+  lastName String?
+  email String?
+  phone String?
+  
+  // Customer data
+  addresses Json? // Customer addresses
+  tags String[]
+  
+  // Analytics
+  totalSpent Float @default(0)
+  ordersCount Int @default(0)
+  
+  // Status
+  acceptsMarketing Boolean @default(false)
+  state String @default("enabled") // enabled, disabled, invited
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  store ShopifyStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orders ShopifyOrder[]
+  
+  @@unique([shopifyId, storeId])
+  @@map("shopify_customers")
+}
+
+// System Settings and Configuration
+model Settings {
+  id String @id @default(cuid())
+  userId String?
+  shopId String? // For Shopify-specific settings
+  
+  // Settings data
+  key String
+  value Json
+  category String? // ai, optimization, integration, etc.
+  
+  // Metadata
+  isPublic Boolean @default(false)
+  description String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, shopId, key])
+  @@map("settings")
+}
+
+// Analytics and Performance Tracking
+model AnalyticsEvent {
+  id String @id @default(cuid())
+  
+  // Event identification
+  eventType String // page_view, conversion, click, etc.
+  eventCategory String? // marketing, product, user_action
+  
+  // Event data
+  properties Json // Event properties and metadata
+  userId String?
+  sessionId String?
+  
+  // Context
+  userAgent String?
+  ipAddress String?
+  referrer String?
+  
+  timestamp DateTime @default(now())
+  
+  @@index([eventType, timestamp])
+  @@index([userId, timestamp])
+  @@map("analytics_events")
+}
+
+// AI Assistant Conversations
+model Conversation {
+  id String @id @default(cuid())
+  userId String?
+  brandId String?
+  
+  // Conversation metadata
+  title String?
+  status String @default("active") // active, archived
+  
+  // AI context
+  context Json? // Conversation context and memory
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  messages Message[]
+  
+  @@map("conversations")
+}
+
+model Message {
+  id String @id @default(cuid())
+  conversationId String
+  
+  // Message content
+  role String // user, assistant, system
+  content String
+  
+  // AI metadata
+  model String? // Which AI model was used
+  tokens Int? // Token count
+  confidence Float?
+  
+  // Message context
+  context Json? // Additional context data
+  
+  timestamp DateTime @default(now())
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@map("messages")
+}
+
+// Performance Monitoring
+model PerformanceMetric {
+  id String @id @default(cuid())
+  
+  // Metric identification
+  metricType String // response_time, error_rate, conversion_rate, etc.
+  source String // api, frontend, optimization, etc.
+  
+  // Metric data
+  value Float
+  unit String? // ms, percentage, count, etc.
+  
+  // Context
+  metadata Json? // Additional metric context
+  tags String[]
+  
+  timestamp DateTime @default(now())
+  
+  @@index([metricType, timestamp])
+  @@index([source, timestamp])
+  @@map("performance_metrics")
+}

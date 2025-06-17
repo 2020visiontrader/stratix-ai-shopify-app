@@ -1,14 +1,15 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-
-interface RequestOptions extends AxiosRequestConfig {
-  cache?: boolean;
-}
+import axios from 'axios';
+import { CacheEntry, ManagerState, NetworkResponse, RequestOptions } from './CoreTypes';
 
 export class NetworkManager {
   private static instance: NetworkManager;
-  private cache: Map<string, { data: any; timestamp: number }> = new Map();
+  private cache: Map<string, CacheEntry<unknown>> = new Map();
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-  private lastUpdate: Date;
+  private state: ManagerState = {
+    lastUpdate: new Date(),
+    version: '1.0.0',
+    status: 'active'
+  };
 
   private constructor() {
     // Initialize axios instance with default config
@@ -23,22 +24,29 @@ export class NetworkManager {
     return NetworkManager.instance;
   }
 
-  public async request<T = any>(options: RequestOptions): Promise<AxiosResponse<T>> {
+  public async request<T>(options: RequestOptions): Promise<NetworkResponse<T>> {
     const { cache = true, ...config } = options;
     const cacheKey = this.generateCacheKey(config);
 
     if (cache && this.isCacheValid(cacheKey)) {
-      return this.getFromCache(cacheKey);
+      return this.getFromCache<T>(cacheKey);
     }
 
     try {
       const response = await axios.request<T>(config);
+      const networkResponse: NetworkResponse<T> = {
+        data: response.data,
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers as Record<string, string>,
+        config: response.config
+      };
       
       if (cache) {
-        this.setCache(cacheKey, response);
+        this.setCache(cacheKey, networkResponse);
       }
 
-      return response;
+      return networkResponse;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         // Handle specific error cases
@@ -52,7 +60,7 @@ export class NetworkManager {
     }
   }
 
-  private generateCacheKey(config: AxiosRequestConfig): string {
+  private generateCacheKey(config: RequestOptions): string {
     return `${config.method}-${config.url}-${JSON.stringify(config.params)}-${JSON.stringify(config.data)}`;
   }
 
@@ -64,47 +72,49 @@ export class NetworkManager {
     return now - cached.timestamp < this.CACHE_DURATION;
   }
 
-  private getFromCache<T>(key: string): AxiosResponse<T> {
+  private getFromCache<T>(key: string): NetworkResponse<T> {
     const cached = this.cache.get(key);
     if (!cached) throw new Error('Cache miss');
 
-    return {
-      data: cached.data,
-      status: 200,
-      statusText: 'OK',
-      headers: {},
-      config: {} as any,
-    };
+    return cached.data as NetworkResponse<T>;
   }
 
-  private setCache<T>(key: string, response: AxiosResponse<T>): void {
+  private setCache<T>(key: string, response: NetworkResponse<T>): void {
     this.cache.set(key, {
-      data: response.data,
+      data: response,
       timestamp: Date.now(),
     });
   }
 
   public clearCache(): void {
     this.cache.clear();
+    this.state.lastUpdate = new Date();
   }
 
   public removeFromCache(key: string): void {
     this.cache.delete(key);
+    this.state.lastUpdate = new Date();
   }
 
-  public exportData(): { cache: Array<[string, { data: any; timestamp: number }]>; lastUpdate: number } {
+  public getLastUpdate(): Date {
+    return this.state.lastUpdate;
+  }
+
+  public getState(): ManagerState {
+    return { ...this.state };
+  }
+
+  public async exportData(): Promise<string> {
     const data = {
       cache: Array.from(this.cache.entries()),
-      lastUpdate: this.lastUpdate.getTime(),
+      state: this.state
     };
-    return data;
+    return JSON.stringify(data);
   }
 
-  public importData(data: { cache: Array<[string, { data: any; timestamp: number }]>; lastUpdate: number }): void {
-    this.cache.clear();
-    data.cache.forEach(([key, value]) => {
-      this.cache.set(key, value);
-    });
-    this.lastUpdate = new Date(data.lastUpdate);
+  public async importData(dataJson: string): Promise<void> {
+    const data = JSON.parse(dataJson);
+    this.cache = new Map(data.cache);
+    this.state = data.state;
   }
 } 

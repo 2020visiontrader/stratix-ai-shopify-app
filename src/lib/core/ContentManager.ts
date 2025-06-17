@@ -1,4 +1,4 @@
-import { NetworkManager } from '../../../frontend/src/utils/network';
+import { NetworkManager } from '@/lib/core/NetworkManager';
 
 interface Content {
   id: string;

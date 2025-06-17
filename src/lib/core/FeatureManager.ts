@@ -1,18 +1,13 @@
-export interface Feature {
-  id: string;
-  name: string;
-  description: string;
-  enabled: boolean;
-  dependencies?: string[];
-  category?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { Feature, ManagerState } from './CoreTypes';
 
 export class FeatureManager {
   private static instance: FeatureManager;
   private features: Map<string, Feature> = new Map();
-  private lastUpdate: Date = new Date();
+  private state: ManagerState = {
+    lastUpdate: new Date(),
+    version: '1.0.0',
+    status: 'active'
+  };
 
   private constructor() {}
 
@@ -24,20 +19,39 @@ export class FeatureManager {
   }
 
   public addFeature(feature: Feature): void {
-    this.features.set(feature.id, { ...feature, createdAt: new Date(), updatedAt: new Date() });
-    this.lastUpdate = new Date();
+    this.features.set(feature.id, { 
+      ...feature,
+      state: {
+        enabled: feature.state.enabled,
+        visible: feature.state.visible ?? true,
+        loading: false
+      },
+      metadata: {
+        ...feature.metadata,
+        updated: Date.now()
+      }
+    });
+    this.state.lastUpdate = new Date();
   }
 
   public updateFeature(id: string, updates: Partial<Feature>): void {
     const feature = this.features.get(id);
     if (!feature) throw new Error(`Feature ${id} not found`);
-    this.features.set(id, { ...feature, ...updates, updatedAt: new Date() });
-    this.lastUpdate = new Date();
+    this.features.set(id, { 
+      ...feature, 
+      ...updates,
+      metadata: {
+        ...feature.metadata,
+        ...updates.metadata,
+        updated: Date.now()
+      }
+    });
+    this.state.lastUpdate = new Date();
   }
 
   public removeFeature(id: string): void {
     this.features.delete(id);
-    this.lastUpdate = new Date();
+    this.state.lastUpdate = new Date();
   }
 
   public getFeature(id: string): Feature | undefined {
@@ -51,22 +65,37 @@ export class FeatureManager {
   public toggleFeature(id: string, enabled: boolean): void {
     const feature = this.features.get(id);
     if (!feature) throw new Error(`Feature ${id} not found`);
-    this.features.set(id, { ...feature, enabled, updatedAt: new Date() });
-    this.lastUpdate = new Date();
+    this.features.set(id, { 
+      ...feature, 
+      state: {
+        ...feature.state,
+        enabled,
+        loading: false
+      },
+      metadata: {
+        ...feature.metadata,
+        updated: Date.now()
+      }
+    });
+    this.state.lastUpdate = new Date();
   }
 
-  public getFeaturesByCategory(category: string): Feature[] {
-    return Array.from(this.features.values()).filter(f => f.category === category);
+  public getFeaturesByType(type: Feature['type']): Feature[] {
+    return Array.from(this.features.values()).filter(f => f.type === type);
   }
 
   public getLastUpdate(): Date {
-    return this.lastUpdate;
+    return this.state.lastUpdate;
+  }
+
+  public getState(): ManagerState {
+    return { ...this.state };
   }
 
   public async exportData(): Promise<string> {
     const data = {
       features: Array.from(this.features.entries()),
-      lastUpdate: this.lastUpdate.getTime(),
+      state: this.state
     };
     return JSON.stringify(data);
   }
@@ -74,6 +103,6 @@ export class FeatureManager {
   public async importData(dataJson: string): Promise<void> {
     const data = JSON.parse(dataJson);
     this.features = new Map(data.features);
-    this.lastUpdate = new Date(data.lastUpdate);
+    this.state = data.state;
   }
 } 

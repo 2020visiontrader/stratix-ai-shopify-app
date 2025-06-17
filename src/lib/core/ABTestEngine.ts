@@ -1,59 +1,5 @@
 import { NetworkManager } from '@/lib/core/NetworkManager';
-
-export interface TestVariant {
-  id: string;
-  name: string;
-  type: 'content' | 'design' | 'pricing' | 'layout';
-  changes: Record<string, any>;
-  metrics: {
-    visitors: number;
-    conversions: number;
-    revenue: number;
-    conversionRate: number;
-  };
-}
-
-export interface TestConfig {
-  id: string;
-  name: string;
-  description: string;
-  variants: TestVariant[];
-  targetAudience: {
-    segments: string[];
-    conditions: Record<string, any>;
-  };
-  goals: {
-    primary: string;
-    secondary: string[];
-    thresholds: Record<string, number>;
-  };
-  schedule: {
-    startDate: Date;
-    endDate: Date;
-    trafficSplit: Record<string, number>;
-  };
-  status: 'draft' | 'running' | 'paused' | 'completed';
-}
-
-export interface TestResult {
-  testId: string;
-  winner: string | null;
-  confidence: number;
-  metrics: {
-    variant: string;
-    visitors: number;
-    conversions: number;
-    revenue: number;
-    conversionRate: number;
-    improvement: number;
-  }[];
-  insights: {
-    type: string;
-    description: string;
-    impact: number;
-  }[];
-  recommendations: string[];
-}
+import { ManagerState, TestAnalysis, TestConfig, TestMetrics, TestResult } from './CoreTypes';
 
 export class ABTestEngine {
   private static instance: ABTestEngine;
@@ -61,7 +7,11 @@ export class ABTestEngine {
   private tests: Map<string, TestConfig> = new Map();
   private results: Map<string, TestResult> = new Map();
   private activeTests: Set<string> = new Set();
-  private lastUpdate: Date;
+  private state: ManagerState = {
+    lastUpdate: new Date(),
+    version: '1.0.0',
+    status: 'active'
+  };
 
   private constructor() {
     this.networkManager = NetworkManager.getInstance();
@@ -128,7 +78,7 @@ export class ABTestEngine {
       await this.networkManager.request({
         method: 'POST',
         url: `/api/tests/${testId}/start`,
-        data: { startDate: new Date() },
+        data: { startDate: new Date().toISOString() },
         cache: false
       });
     } catch (error) {
@@ -173,14 +123,14 @@ export class ABTestEngine {
     }
 
     try {
-      const response = await this.networkManager.request({
+      const response = await this.networkManager.request<TestResult>({
         method: 'POST',
         url: `/api/tests/${testId}/complete`,
-        data: { endDate: new Date() },
+        data: { endDate: new Date().toISOString() },
         cache: false
       });
 
-      const result = response.data as TestResult;
+      const result = response.data;
       this.results.set(testId, result);
       test.status = 'completed';
       this.activeTests.delete(testId);
@@ -195,7 +145,7 @@ export class ABTestEngine {
   public async trackVariant(
     testId: string,
     variantId: string,
-    metrics: Partial<TestVariant['metrics']>
+    metrics: Partial<TestMetrics>
   ): Promise<void> {
     const test = this.tests.get(testId);
     if (!test) {
@@ -222,30 +172,20 @@ export class ABTestEngine {
     }
   }
 
-  public async analyzeTest(testId: string): Promise<{
-    status: string;
-    progress: number;
-    confidence: number;
-    insights: string[];
-  }> {
+  public async analyzeTest(testId: string): Promise<TestAnalysis> {
     const test = this.tests.get(testId);
     if (!test) {
       throw new Error(`Test ${testId} not found`);
     }
 
     try {
-      const response = await this.networkManager.request({
+      const response = await this.networkManager.request<TestAnalysis>({
         method: 'GET',
         url: `/api/tests/${testId}/analyze`,
         cache: false
       });
 
-      return response.data as {
-        status: string;
-        progress: number;
-        confidence: number;
-        insights: string[];
-      };
+      return response.data;
     } catch (error) {
       console.error('Failed to analyze test:', error);
       throw error;
@@ -264,12 +204,20 @@ export class ABTestEngine {
     return Array.from(this.activeTests);
   }
 
+  public getLastUpdate(): Date {
+    return this.state.lastUpdate;
+  }
+
+  public getState(): ManagerState {
+    return { ...this.state };
+  }
+
   public async exportData(): Promise<string> {
     const data = {
       tests: Array.from(this.tests.entries()),
       results: Array.from(this.results.entries()),
       activeTests: Array.from(this.activeTests),
-      lastUpdate: this.lastUpdate.getTime(),
+      state: this.state
     };
     return JSON.stringify(data);
   }
@@ -279,6 +227,6 @@ export class ABTestEngine {
     this.tests = new Map(data.tests);
     this.results = new Map(data.results);
     this.activeTests = new Set(data.activeTests);
-    this.lastUpdate = new Date(data.lastUpdate);
+    this.state = data.state;
   }
 } 

@@ -1,4 +1,5 @@
 import { NetworkManager } from '@/lib/core/NetworkManager';
+import { BrandCheck, BrandFinding, BrandGuidelines, ManagerState } from './CoreTypes';
 
 export interface BrandVoice {
   tone: string[];
@@ -74,7 +75,11 @@ export class BrandDNA {
   private networkManager: NetworkManager;
   private guidelines: Map<string, BrandGuidelines> = new Map();
   private checks: Map<string, BrandCheck[]> = new Map();
-  private lastUpdate: Date = new Date();
+  private state: ManagerState = {
+    lastUpdate: new Date(),
+    version: '1.0.0',
+    status: 'active'
+  };
 
   private constructor() {
     this.networkManager = NetworkManager.getInstance();
@@ -89,7 +94,7 @@ export class BrandDNA {
 
   public async addGuidelines(guidelines: BrandGuidelines): Promise<void> {
     this.guidelines.set(guidelines.id, guidelines);
-    this.lastUpdate = new Date();
+    this.state.lastUpdate = new Date();
 
     try {
       await this.networkManager.request({
@@ -114,7 +119,7 @@ export class BrandDNA {
     }
 
     Object.assign(guidelines, updates);
-    this.lastUpdate = new Date();
+    this.state.lastUpdate = new Date();
 
     try {
       await this.networkManager.request({
@@ -130,23 +135,22 @@ export class BrandDNA {
   }
 
   public async checkCompliance(
-    content: string | Record<string, any>,
+    content: string | Record<string, unknown>,
     type: BrandCheck['type']
   ): Promise<BrandCheck> {
     try {
-      const response = await this.networkManager.request({
+      const response = await this.networkManager.request<BrandCheck>({
         method: 'POST',
         url: '/api/brand/check',
         data: { content, type },
         cache: false
       });
 
-      const check = response.data as BrandCheck;
-      if (!this.checks.has(check.id)) {
-        this.checks.set(check.id, []);
-      }
-      this.checks.get(check.id)!.push(check);
-      this.lastUpdate = new Date();
+      const check = response.data;
+      const checks = this.checks.get(check.id) || [];
+      checks.push(check);
+      this.checks.set(check.id, checks);
+      this.state.lastUpdate = new Date();
 
       return check;
     } catch (error) {
@@ -156,33 +160,23 @@ export class BrandDNA {
   }
 
   public async analyzeConsistency(
-    content: string | Record<string, any>[]
+    content: string | Record<string, unknown>[]
   ): Promise<{
     score: number;
-    issues: {
-      type: string;
-      description: string;
-      severity: 'high' | 'medium' | 'low';
-      recommendation: string;
-    }[];
+    issues: BrandFinding[];
   }> {
     try {
-      const response = await this.networkManager.request({
+      const response = await this.networkManager.request<{
+        score: number;
+        issues: BrandFinding[];
+      }>({
         method: 'POST',
         url: '/api/brand/analyze',
         data: { content },
         cache: false
       });
 
-      return response.data as {
-        score: number;
-        issues: {
-          type: string;
-          description: string;
-          severity: 'high' | 'medium' | 'low';
-          recommendation: string;
-        }[];
-      };
+      return response.data;
     } catch (error) {
       console.error('Failed to analyze brand consistency:', error);
       throw error;
@@ -198,16 +192,16 @@ export class BrandDNA {
     }
   ): Promise<BrandGuidelines> {
     try {
-      const response = await this.networkManager.request({
+      const response = await this.networkManager.request<BrandGuidelines>({
         method: 'POST',
         url: '/api/brand/generate',
         data: brandInfo,
         cache: false
       });
 
-      const guidelines = response.data as BrandGuidelines;
+      const guidelines = response.data;
       this.guidelines.set(guidelines.id, guidelines);
-      this.lastUpdate = new Date();
+      this.state.lastUpdate = new Date();
 
       return guidelines;
     } catch (error) {
@@ -225,14 +219,18 @@ export class BrandDNA {
   }
 
   public getLastUpdate(): Date {
-    return this.lastUpdate;
+    return this.state.lastUpdate;
+  }
+
+  public getState(): ManagerState {
+    return { ...this.state };
   }
 
   public async exportData(): Promise<string> {
     const data = {
       guidelines: Array.from(this.guidelines.entries()),
       checks: Array.from(this.checks.entries()),
-      lastUpdate: this.lastUpdate.getTime(),
+      state: this.state
     };
     return JSON.stringify(data);
   }
@@ -241,6 +239,6 @@ export class BrandDNA {
     const data = JSON.parse(dataJson);
     this.guidelines = new Map(data.guidelines);
     this.checks = new Map(data.checks);
-    this.lastUpdate = new Date(data.lastUpdate);
+    this.state = data.state;
   }
 } 
