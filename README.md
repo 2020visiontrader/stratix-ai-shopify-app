@@ -90,3 +90,4 @@ npm install
 ## License
 
 MIT
+# stratix-ai-shopify-app
