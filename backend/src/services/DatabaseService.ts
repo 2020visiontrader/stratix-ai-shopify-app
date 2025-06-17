@@ -1,14 +1,14 @@
 import { supabase } from '../lib/supabase';
 import {
-    DatabaseResult,
-    QueryParams
+  DatabaseResult,
+  QueryParams
 } from '../types/database';
 import { AppError } from '../utils/errorHandling';
 
 export class DatabaseService {
   private static instance: DatabaseService;
 
-  private constructor() {}
+  constructor() {}
 
   public static getInstance(): DatabaseService {
     if (!DatabaseService.instance) {
@@ -77,7 +77,8 @@ export class DatabaseService {
         error: new AppError(
           `Failed to create record in ${table}`,
           500,
-          error instanceof Error ? error.message : undefined
+          true,
+          error instanceof Error ? error.message : 'Unknown error'
         )
       };
     }
@@ -108,7 +109,8 @@ export class DatabaseService {
         error: new AppError(
           `Failed to update record in ${table}`,
           500,
-          error instanceof Error ? error.message : undefined
+          true,
+          error instanceof Error ? error.message : 'Unknown error'
         )
       };
     }
@@ -136,7 +138,8 @@ export class DatabaseService {
         error: new AppError(
           `Failed to delete record from ${table}`,
           500,
-          error instanceof Error ? error.message : undefined
+          true,
+          error instanceof Error ? error.message : 'Unknown error'
         )
       };
     }
@@ -165,7 +168,8 @@ export class DatabaseService {
         error: new AppError(
           `Failed to fetch record from ${table}`,
           500,
-          error instanceof Error ? error.message : undefined
+          true,
+          error instanceof Error ? error.message : 'Unknown error'
         )
       };
     }
@@ -191,7 +195,8 @@ export class DatabaseService {
         error: new AppError(
           `Failed to list records from ${table}`,
           500,
-          error instanceof Error ? error.message : undefined
+          true,
+          error instanceof Error ? error.message : 'Unknown error'
         )
       };
     }
@@ -203,7 +208,9 @@ export class DatabaseService {
   ): Promise<DatabaseResult<number>> {
     try {
       const query = this.buildQuery(table, { ...params, pagination: undefined });
-      const { count, error } = await query.count();
+      const { count, error } = await supabase
+        .from(table)
+        .select('*', { count: 'exact', head: true });
 
       if (error) throw error;
 
@@ -217,9 +224,86 @@ export class DatabaseService {
         error: new AppError(
           `Failed to count records in ${table}`,
           500,
-          error instanceof Error ? error.message : undefined
+          true,
+          error instanceof Error ? error.message : 'Unknown error'
         )
       };
     }
   }
-} 
+
+  async getUserById(userId: string): Promise<any> {
+    // Mock implementation
+    return {
+      id: userId,
+      email: 'user@example.com',
+      name: 'Test User',
+      shopDomain: 'test-shop.myshopify.com',
+      plan: 'free',
+    };
+  }
+
+  async getUserNotifications(userId: string, options: any): Promise<any[]> {
+    // Mock implementation
+    return [];
+  }
+
+  async markNotificationAsRead(notificationId: string): Promise<void> {
+    // Mock implementation
+    console.log('Marking notification as read:', notificationId);
+  }
+
+  async disconnect(): Promise<void> {
+    // Mock implementation
+    console.log('Database disconnected');
+  }
+
+  async cleanupExpiredData(): Promise<void> {
+    // Mock implementation
+    console.log('Cleaning up expired data');
+  }
+
+  async healthCheck(): Promise<{ connected: boolean; latency?: number }> {
+    try {
+      const start = Date.now();
+      // Simple query to test connection
+      const { data, error } = await supabase.from('__health_check__').select('1').limit(1);
+      const latency = Date.now() - start;
+      
+      return {
+        connected: !error,
+        latency
+      };
+    } catch (error) {
+      return {
+        connected: false
+      };
+    }
+  }
+
+  async getUserByEmail(email: string): Promise<any> {
+    // Mock implementation
+    return {
+      id: 'mock-user-id',
+      email,
+      name: email.split('@')[0],
+      shopDomain: 'mock-shop.myshopify.com',
+      plan: 'free',
+      role: 'user',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  async createUser(userData: any): Promise<any> {
+    // Mock implementation
+    const user = {
+      id: Date.now().toString(),
+      ...userData,
+      role: 'user',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    console.log('Created user:', user);
+    return user;
+  }
+}

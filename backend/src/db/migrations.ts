@@ -117,9 +117,9 @@ export async function runMigrations(): Promise<void> {
 
   } catch (error) {
     throw new AppError(
-      'Failed to run database migrations',
+      `Failed to run database migrations: ${error instanceof Error ? error.message : 'Unknown error'}`,
       500,
-      error instanceof Error ? error.message : undefined
+      true
     );
   }
 } 

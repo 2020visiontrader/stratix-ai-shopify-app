@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { DatabaseConfig } from '../types';
+import { ContentBackup, StoreRevision, SupabaseConfig } from '../types';
 
 // Database configuration
-const config: DatabaseConfig = {
+const config: SupabaseConfig = {
   supabaseUrl: process.env.SUPABASE_URL || '',
   supabaseKey: process.env.SUPABASE_ANON_KEY || '',
   schema: process.env.SUPABASE_SCHEMA || 'public'
@@ -120,3 +120,6 @@ export const getSupabaseStatus = async (): Promise<{
 
 // Export database instance
 export const db = supabase; 
+
+// Re-export types
+export type { ContentBackup, StoreRevision };

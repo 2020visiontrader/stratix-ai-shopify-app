@@ -1,5 +1,5 @@
-import { OptimizationSuggestion } from '../core/LandingPageOptimizer';
 import { supabase } from '../lib/supabase';
+import { OptimizationSuggestion } from '../types';
 import { AppError } from '../utils/errorHandling';
 
 interface PerformanceLog {
@@ -66,9 +66,9 @@ export class StorageService {
           section: suggestion.section,
           current_content: suggestion.currentContent,
           suggested_content: suggestion.suggestedContent,
-          expected_improvement: suggestion.expectedImprovement,
+          impact: suggestion.impact,
           confidence: suggestion.confidence,
-          reasoning: suggestion.reasoning,
+          reason: suggestion.reason,
           status: 'pending'
         });
 
@@ -127,9 +127,10 @@ export class StorageService {
         section: row.section,
         currentContent: row.current_content,
         suggestedContent: row.suggested_content,
-        expectedImprovement: row.expected_improvement,
+        impact: row.impact || row.expected_improvement,
         confidence: row.confidence,
-        reasoning: row.reasoning
+        reason: row.reason || row.reasoning,
+        timestamp: new Date(row.timestamp || row.created_at)
       }));
 
     } catch (error) {
@@ -192,7 +193,8 @@ export class StorageService {
       throw new AppError(
         'Failed to upload file',
         500,
-        error instanceof Error ? error.message : undefined
+        true,
+        error instanceof Error ? error.message : 'Unknown error'
       );
     }
   }
@@ -209,26 +211,26 @@ export class StorageService {
       throw new AppError(
         'Failed to delete file',
         500,
-        error instanceof Error ? error.message : undefined
+        true,
+        error instanceof Error ? error.message : 'Unknown error'
       );
     }
   }
 
   public async getFileUrl(filePath: string): Promise<string> {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .storage
         .from(this.bucketName)
         .getPublicUrl(filePath);
-
-      if (error) throw error;
 
       return data.publicUrl;
     } catch (error) {
       throw new AppError(
         'Failed to get file URL',
         500,
-        error instanceof Error ? error.message : undefined
+        true,
+        error instanceof Error ? error.message : 'Unknown error'
       );
     }
   }
@@ -264,7 +266,8 @@ export class StorageService {
       throw new AppError(
         'Failed to list files',
         500,
-        error instanceof Error ? error.message : undefined
+        true,
+        error instanceof Error ? error.message : 'Unknown error'
       );
     }
   }
@@ -286,7 +289,8 @@ export class StorageService {
       throw new AppError(
         'Failed to create signed URL',
         500,
-        error instanceof Error ? error.message : undefined
+        true,
+        error instanceof Error ? error.message : 'Unknown error'
       );
     }
   }

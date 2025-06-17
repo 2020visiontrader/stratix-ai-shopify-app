@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { Router } from 'express';
 import { EscalationEngine } from '../core/EscalationEngine';
-import { db } from '../lib/supabase';
+import { db } from '../lib/database';
 import { sendEmail } from '../utils/email';
 
 const router = Router();
@@ -74,11 +74,9 @@ router.post('/webhooks/shopify/billing', async (req, res) => {
       // Send cancellation email
       await sendEmail({
         to: shop.email,
-        template: 'subscription-cancelled',
-        data: {
-          shop_name: shop.store_name,
-          reactivate_url: `${process.env.APP_URL}/billing/reactivate?shop=${shop.shop_domain}`
-        }
+        subject: 'Subscription Cancelled',
+        html: `<p>Hi ${shop.store_name},</p><p>Your subscription has been cancelled.</p><p><a href="${process.env.APP_URL}/billing/reactivate?shop=${shop.shop_domain}">Reactivate</a></p>`,
+        text: `Your subscription has been cancelled. Reactivate at: ${process.env.APP_URL}/billing/reactivate?shop=${shop.shop_domain}`
       });
 
       // Escalate incident

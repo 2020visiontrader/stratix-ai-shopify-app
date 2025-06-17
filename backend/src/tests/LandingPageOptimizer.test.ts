@@ -2,7 +2,7 @@ import { EvolutionLogger } from '../core/EvolutionLogger';
 import { LandingPageOptimizer } from '../core/LandingPageOptimizer';
 import { ShopifyAnalytics } from '../integrations/shopify/Analytics';
 import { ShopifyContentManager } from '../integrations/shopify/ContentManager';
-import { db } from '../lib/supabase';
+import { db } from '../lib/database';
 import { StorageService } from '../services/StorageService';
 
 // Mock dependencies
@@ -157,12 +157,14 @@ describe('LandingPageOptimizer', () => {
     };
 
     const mockSuggestion = {
+      id: 'suggestion-123',
       section: 'headline' as const,
       currentContent: 'Old headline',
       suggestedContent: 'New headline',
-      expectedImprovement: 0.15,
+      reason: 'Better messaging',
       confidence: 0.8,
-      reasoning: 'Better messaging'
+      impact: 'medium' as const,
+      timestamp: new Date()
     };
 
     beforeEach(() => {

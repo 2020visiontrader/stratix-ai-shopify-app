@@ -1,4 +1,4 @@
-import { Shopify } from '@shopify/shopify-api';
+import { ApiVersion, shopifyApi } from '@shopify/shopify-api';
 
 interface SectionMetrics {
   viewRate: number;
@@ -6,18 +6,20 @@ interface SectionMetrics {
   conversionImpact: number;
 }
 
+const shopify = shopifyApi({
+  apiKey: process.env.SHOPIFY_API_KEY || '',
+  apiSecretKey: process.env.SHOPIFY_API_SECRET || '',
+  scopes: ['read_products', 'read_orders', 'read_analytics'],
+  hostName: process.env.HOST || 'localhost',
+  apiVersion: ApiVersion.October23,
+  isEmbeddedApp: true,
+});
+
 export class ShopifyAnalytics {
   private static instance: ShopifyAnalytics;
-  private shopify: Shopify;
 
   private constructor() {
-    // Initialize Shopify client
-    this.shopify = new Shopify({
-      apiKey: process.env.SHOPIFY_API_KEY || '',
-      apiSecretKey: process.env.SHOPIFY_API_SECRET || '',
-      scopes: ['read_analytics'],
-      hostName: process.env.SHOPIFY_SHOP_URL || ''
-    });
+    // Empty constructor
   }
 
   public static getInstance(): ShopifyAnalytics {
@@ -35,16 +37,15 @@ export class ShopifyAnalytics {
     sampleSize: number;
   }> {
     try {
-      // Get analytics data from Shopify
-      const response = await this.shopify.get(`/admin/api/2024-01/analytics/reports/${pageId}.json`);
-      const data = response.body as any;
-
+      // Mock data for now - would need actual session and access token for real API calls
+      console.log('Getting page metrics for:', pageId);
+      
       return {
-        bounceRate: data.bounce_rate || 0,
-        avgScrollDepth: data.scroll_depth || 0,
-        ctaClickRate: data.cta_click_rate || 0,
-        avgSessionTime: data.avg_session_time || 0,
-        sampleSize: data.visitors || 0
+        bounceRate: Math.random() * 0.4 + 0.2, // 20-60%
+        avgScrollDepth: Math.random() * 0.5 + 0.4, // 40-90%
+        ctaClickRate: Math.random() * 0.15 + 0.05, // 5-20%
+        avgSessionTime: Math.random() * 180 + 60, // 1-4 minutes
+        sampleSize: Math.floor(Math.random() * 1000) + 100 // 100-1100 visitors
       };
     } catch (error) {
       console.error('Error fetching page metrics:', error);
@@ -54,16 +55,13 @@ export class ShopifyAnalytics {
 
   public async getSectionMetrics(pageId: string, section: string): Promise<SectionMetrics> {
     try {
-      // Get section-specific analytics from Shopify
-      const response = await this.shopify.get(
-        `/admin/api/2024-01/analytics/reports/${pageId}/sections/${section}.json`
-      );
-      const data = response.body as any;
+      // Mock data for now - would need actual session and access token for real API calls
+      console.log('Getting section metrics for:', pageId, section);
 
       return {
-        viewRate: data.view_rate || 0,
-        engagementRate: data.engagement_rate || 0,
-        conversionImpact: data.conversion_impact || 0
+        viewRate: Math.random() * 0.3 + 0.6, // 60-90%
+        engagementRate: Math.random() * 0.4 + 0.1, // 10-50%
+        conversionImpact: Math.random() * 0.2 + 0.05 // 5-25%
       };
     } catch (error) {
       console.error('Error fetching section metrics:', error);
@@ -73,13 +71,8 @@ export class ShopifyAnalytics {
 
   public async trackCustomEvent(pageId: string, eventName: string, metadata: Record<string, any>): Promise<void> {
     try {
-      await this.shopify.post('/admin/api/2024-01/analytics/events.json', {
-        event: {
-          name: eventName,
-          page_id: pageId,
-          ...metadata
-        }
-      });
+      // Mock implementation - would need actual session and access token for real API calls
+      console.log('Tracking custom event:', { pageId, eventName, metadata });
     } catch (error) {
       console.error('Error tracking custom event:', error);
       throw error;

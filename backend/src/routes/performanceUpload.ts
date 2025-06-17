@@ -1,8 +1,8 @@
-import csv from 'csv-parse';
+import { parse } from 'csv-parse';
 import { Router } from 'express';
 import multer from 'multer';
 import { InsightsEngine } from '../core/InsightsEngine';
-import { db } from '../lib/supabase';
+import { db } from '../lib/database';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -34,7 +34,7 @@ router.post('/upload/performance', upload.single('file'), async (req, res) => {
 
     // Parse CSV
     const records: PerformanceMetrics[] = [];
-    const parser = csv.parse({
+    const parser = parse({
       columns: true,
       skip_empty_lines: true
     });
@@ -69,7 +69,10 @@ router.post('/upload/performance', upload.single('file'), async (req, res) => {
           upload_date: new Date()
         });
 
-        if (!upload?.id) {
+        const uploadId = `upload_${Date.now()}_${brandId}`;
+        console.log('Upload created:', upload);
+        
+        if (!upload) {
           throw new Error('Failed to store upload data');
         }
 
@@ -79,7 +82,7 @@ router.post('/upload/performance', upload.single('file'), async (req, res) => {
         // Store insights
         await db.performance_insights.create({
           brand_id: brandId,
-          upload_id: upload.id,
+          upload_id: uploadId,
           top_performers: insights.topPerformers,
           weak_performers: insights.weakPerformers,
           recommendations: insights.recommendations,
@@ -91,7 +94,7 @@ router.post('/upload/performance', upload.single('file'), async (req, res) => {
 
         res.json({
           success: true,
-          upload_id: upload.id,
+          upload_id: uploadId,
           summary: insights
         });
       } catch (error) {
@@ -101,7 +104,7 @@ router.post('/upload/performance', upload.single('file'), async (req, res) => {
     });
 
     // Handle parsing errors
-    parser.on('error', (error) => {
+    parser.on('error', (error: any) => {
       console.error('Error parsing CSV:', error);
       res.status(400).json({ error: 'Invalid CSV format' });
     });

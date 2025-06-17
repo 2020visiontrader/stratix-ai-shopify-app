@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { db } from '../lib/supabase';
+import { db } from '../lib/database';
 
 interface RestrictedEndpoint {
   path: string;

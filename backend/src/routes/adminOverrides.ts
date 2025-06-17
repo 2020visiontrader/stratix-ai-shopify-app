@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { db } from '../lib/supabase';
+import { db } from '../lib/database';
 import { verifyAdmin } from '../middleware/auth';
 
 const router = Router();
@@ -34,7 +34,7 @@ router.post('/admin/override', verifyAdmin, async (req, res) => {
         override_type: overrideType,
         expiry_date: expiryDate,
         notes,
-        admin_id: req.user.id,
+        admin_id: req.user?.id || 'unknown',
         timestamp: new Date()
       }
     });

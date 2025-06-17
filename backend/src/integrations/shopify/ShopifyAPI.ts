@@ -116,8 +116,10 @@ export class ShopifyAPI {
 
     return metafields.reduce(
       (acc: ShopifyProduct['metafields'], field: any) => {
-        if (field.namespace === 'seo') {
-          acc![field.key] = field.value;
+        if (field.namespace === 'seo' && acc) {
+          if (field.key === 'seo_title' || field.key === 'seo_description') {
+            (acc as any)[field.key] = field.value;
+          }
         }
         return acc;
       },
