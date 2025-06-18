@@ -77,7 +77,6 @@ export interface StoreRevision {
 }
 
 export interface BrandDNA {
-  id?: string;
   brandId: string;
   tone: string;
   style: string;
@@ -98,13 +97,22 @@ export interface OptimizationSuggestion {
 }
 
 export interface PerformanceMetrics {
-  pageId: string;
-  conversionRate: number;
-  bounceRate: number;
-  avgTimeOnPage: number;
-  pageViews: number;
-  uniqueVisitors: number;
-  timestamp: Date;
+  id: string;
+  brand_id: string;
+  type: 'product' | 'collection' | 'page';
+  content_id: string;
+  metrics: {
+    views: number;
+    clicks: number;
+    conversions: number;
+    revenue: number;
+    bounce_rate: number;
+    time_on_page: number;
+  };
+  period: 'daily' | 'weekly' | 'monthly';
+  date: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface User {
@@ -240,4 +248,137 @@ export interface BulkOperation {
   results: any[];
   createdAt: Date;
   completedAt?: Date;
+}
+
+export interface Product {
+  id: string;
+  shop_id: string;
+  title: string;
+  description: string;
+  handle: string;
+  vendor: string;
+  product_type: string;
+  tags: string[];
+  variants: ProductVariant[];
+  images: ProductImage[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  title: string;
+  price: string;
+  sku: string;
+  position: number;
+  inventory_policy: string;
+  compare_at_price: string;
+  fulfillment_service: string;
+  inventory_management: string;
+  option1: string;
+  option2?: string;
+  option3?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductImage {
+  id: string;
+  product_id: string;
+  position: number;
+  created_at: string;
+  updated_at: string;
+  width: number;
+  height: number;
+  src: string;
+  variant_ids: string[];
+}
+
+export interface Collection {
+  id: string;
+  shop_id: string;
+  title: string;
+  handle: string;
+  description: string;
+  published_at: string;
+  products_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Page {
+  id: string;
+  shop_id: string;
+  title: string;
+  handle: string;
+  body: string;
+  published_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Shop {
+  id: string;
+  domain: string;
+  name: string;
+  email: string;
+  access_token: string;
+  scope: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Brand {
+  id: string;
+  shop_id: string;
+  name: string;
+  description: string;
+  logo_url: string;
+  website: string;
+  social_media: {
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+    linkedin?: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BrandConfig {
+  id: string;
+  brand_id: string;
+  settings: {
+    content_optimization: boolean;
+    seo_optimization: boolean;
+    social_media_integration: boolean;
+    analytics_tracking: boolean;
+  };
+  features: {
+    ai_content_generation: boolean;
+    performance_monitoring: boolean;
+    competitor_analysis: boolean;
+    market_trends: boolean;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageLog {
+  id: string;
+  brand_id: string;
+  action: string;
+  resource_type: string;
+  resource_id: string;
+  metadata: Record<string, any>;
+  created_at: string;
+}
+
+export interface Event {
+  id: string;
+  brand_id: string;
+  type: string;
+  data: Record<string, any>;
+  created_at: string;
 }
