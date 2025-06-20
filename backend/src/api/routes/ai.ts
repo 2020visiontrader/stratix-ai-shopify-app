@@ -9,19 +9,14 @@ const aiService = new AIService();
 // Generate content
 const generateContentSchema = z.object({
   prompt: z.string().min(1),
-  model: z.string().optional(),
-  maxTokens: z.number().optional(),
-  temperature: z.number().optional()
+  type: z.enum(['title', 'description', 'meta_description']),
+  model: z.string().optional()
 });
 
 router.post('/generate', validate(generateContentSchema), async (req, res, next) => {
   try {
-    const { prompt, model, maxTokens, temperature } = req.body;
-    const result = await aiService.generateContent(prompt, {
-      model,
-      maxTokens,
-      temperature
-    });
+    const { prompt, type, model } = req.body;
+    const result = await aiService.generateContent(prompt, type, model);
     res.json(result);
   } catch (error) {
     next(error);
@@ -35,34 +30,18 @@ const analyzeTextSchema = z.object({
   options: z.record(z.any()).optional()
 });
 
-router.post('/analyze', validate(analyzeTextSchema), async (req, res, next) => {
-  try {
-    const { text, analysisType, options } = req.body;
-    const result = await aiService.analyzeText(text, analysisType, options);
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
+router.post('/analyze', (req, res) => {
+  res.status(501).json({ error: 'Not implemented' });
 });
 
 // Get available models
-router.get('/models', async (req, res, next) => {
-  try {
-    const models = await aiService.getAvailableModels();
-    res.json(models);
-  } catch (error) {
-    next(error);
-  }
+router.get('/models', (req, res) => {
+  res.status(501).json({ error: 'Not implemented' });
 });
 
 // Get usage statistics
-router.get('/usage', async (req, res, next) => {
-  try {
-    const stats = await aiService.getUsageStats();
-    res.json(stats);
-  } catch (error) {
-    next(error);
-  }
+router.get('/usage', (req, res) => {
+  res.status(501).json({ error: 'Not implemented' });
 });
 
 export default router; 

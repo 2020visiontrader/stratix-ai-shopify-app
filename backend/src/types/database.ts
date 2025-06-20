@@ -88,9 +88,4 @@ export interface FilterParams {
   value: any;
 }
 
-export interface QueryParams {
-  pagination?: PaginationParams;
-  filters?: FilterParams[];
-  search?: string;
-  searchFields?: string[];
-} 
+export type QueryParams = Record<string, any>; 

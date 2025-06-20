@@ -1,8 +1,4 @@
-import { config } from '../config';
 import { logger } from '../utils/logger';
-
-// Load test environment variables
-config.load();
 
 // Configure test environment
 process.env.NODE_ENV = 'test';

@@ -45,7 +45,7 @@ export class PerformanceMonitor {
       await this.db.create('performance_metrics', performanceMetrics);
       await this.checkAlerts(brandId, type, contentId, metrics);
     } catch (error) {
-      throw new AppError('Failed to track performance metrics', error);
+      throw new AppError(500, 'PERFORMANCE_TRACKING_FAILED', 'Failed to track performance metrics', error);
     }
   }
 
@@ -69,9 +69,9 @@ export class PerformanceMonitor {
         }
       });
 
-      return metrics as PerformanceMetrics[];
+      return metrics as unknown as PerformanceMetrics[];
     } catch (error) {
-      throw new AppError('Failed to get performance metrics', error);
+      throw new AppError(500, 'PERFORMANCE_METRICS_FAILED', 'Failed to get performance metrics', error);
     }
   }
 
@@ -102,7 +102,7 @@ export class PerformanceMonitor {
       );
 
       if (metrics.length === 0) {
-        throw new AppError('No metrics found for the specified period');
+        throw new AppError(404, 'NO_METRICS_FOUND', 'No metrics found for the specified period');
       }
 
       const average = this.calculateAverage(metrics);
@@ -111,7 +111,7 @@ export class PerformanceMonitor {
 
       return { average, trend, alerts };
     } catch (error) {
-      throw new AppError('Failed to analyze performance', error);
+      throw new AppError(500, 'PERFORMANCE_ANALYSIS_FAILED', 'Failed to analyze performance', error);
     }
   }
 
@@ -187,7 +187,7 @@ export class PerformanceMonitor {
     metrics: PerformanceMetrics['metrics']
   ): Promise<PerformanceAlert[]> {
     try {
-      const brandConfig = await this.db.getById('brand_configs', brandId) as BrandConfig;
+      const brandConfig = await this.db.getById('brand_configs', brandId) as unknown as BrandConfig;
       const alerts: PerformanceAlert[] = [];
 
       if (!brandConfig.features.performance_monitoring) {
@@ -241,7 +241,7 @@ export class PerformanceMonitor {
 
       return alerts;
     } catch (error) {
-      throw new AppError('Failed to check performance alerts', error);
+      throw new AppError(500, 'PERFORMANCE_ALERTS_FAILED', 'Failed to check performance alerts', error);
     }
   }
 } 

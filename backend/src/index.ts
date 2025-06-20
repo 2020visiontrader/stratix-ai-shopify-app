@@ -5,8 +5,6 @@ import express from 'express';
 import helmet from 'helmet';
 import jwt from 'jsonwebtoken';
 import morgan from 'morgan';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 
 // Import routes
 import analysisRoutes from './api/routes/analysis.routes';
@@ -20,9 +18,6 @@ import { DatabaseService } from './services/DatabaseService';
 
 // Load environment variables
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;

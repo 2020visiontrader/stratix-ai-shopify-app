@@ -77,7 +77,7 @@ export class CacheService {
 
       return null;
     } catch (error) {
-      throw new AppError('Failed to get cache item');
+      throw new AppError(500, 'CACHE_ERROR', 'Failed to get cache item');
     }
   }
 
@@ -109,7 +109,7 @@ export class CacheService {
       // Check cache size and cleanup if necessary
       await this.cleanup(type);
     } catch (error) {
-      throw new AppError('Failed to set cache item');
+      throw new AppError(500, 'CACHE_ERROR', 'Failed to set cache item');
     }
   }
 
@@ -121,7 +121,7 @@ export class CacheService {
       // Remove from database cache
       await this.db.delete('cache', key);
     } catch (error) {
-      throw new AppError('Failed to delete cache item');
+      throw new AppError(500, 'CACHE_ERROR', 'Failed to delete cache item');
     }
   }
 
@@ -168,7 +168,7 @@ export class CacheService {
         }
       }
     } catch (error) {
-      throw new AppError('Failed to clear cache');
+      throw new AppError(500, 'CACHE_ERROR', 'Failed to clear cache');
     }
   }
 
@@ -176,7 +176,7 @@ export class CacheService {
     try {
       this.configs.set(type, config);
     } catch (error) {
-      throw new AppError('Failed to update cache config');
+      throw new AppError(500, 'CACHE_ERROR', 'Failed to update cache config');
     }
   }
 
@@ -256,7 +256,7 @@ export class CacheService {
         );
       }
     } catch (error) {
-      throw new AppError('Failed to cleanup cache');
+      throw new AppError(500, 'CACHE_ERROR', 'Failed to cleanup cache');
     }
   }
 } 

@@ -25,7 +25,7 @@ export class ShopifyBilling {
 
   public async checkTrialExpiration(brandId: string): Promise<void> {
     try {
-      const { data: brand } = await db.brands.getById(brandId);
+      const brand = await db.brands.getById(brandId);
       if (!brand) throw new Error('Brand not found');
 
       const trialEndDate = new Date(brand.trial_start_date);
@@ -43,7 +43,7 @@ export class ShopifyBilling {
   private async activateBilling(brandId: string): Promise<void> {
     try {
       // Check if already upgraded
-      const { data: brand } = await db.brands.getById(brandId);
+      const brand = await db.brands.getById(brandId);
       if (!brand) throw new Error('Brand not found');
 
       if (brand.billing_active) {
@@ -52,7 +52,7 @@ export class ShopifyBilling {
       }
 
       // Get shop details
-      const { data: shop } = await db.shopify_shops.getByBrandId(brandId);
+      const shop = await db.shops.getByBrandId(brandId);
       if (!shop) throw new Error('Shop not found');
 
       // Try to activate billing
@@ -133,12 +133,15 @@ export class ShopifyBilling {
     await sendBillingFailAlert(brand, reason);
 
     // Freeze new generations
-    await db.brand_configs.update(brand.id, {
-      feature_locks: {
-        autopilot: true,
-        bulk_operations: true,
-        advanced_analytics: true,
-        content_generation: true
+    await db.brands.update(brand.id, {
+      settings: {
+        ...(brand.settings || {}),
+        feature_locks: {
+          autopilot: true,
+          bulk_operations: true,
+          advanced_analytics: true,
+          content_generation: true
+        }
       }
     });
 

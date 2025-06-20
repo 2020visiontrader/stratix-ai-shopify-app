@@ -72,7 +72,7 @@ export class RateLimiter {
       });
 
       // Calculate remaining requests
-      const requestCount = records.length;
+      const requestCount = (records as unknown as any[]).length;
       const remaining = Math.max(0, config.maxRequests - requestCount);
       const reset = now + config.window;
 
@@ -120,7 +120,7 @@ export class RateLimiter {
         }
       });
 
-      const requestCount = records.length;
+      const requestCount = (records as unknown as any[]).length;
       const remaining = Math.max(0, config.maxRequests - requestCount);
       const reset = now + config.window;
 
@@ -136,10 +136,10 @@ export class RateLimiter {
 
   async resetRateLimit(key: string, type: string = 'default'): Promise<void> {
     try {
-      await this.db.delete('rate_limits', {
-        key,
-        type
-      });
+      const records = await this.db.list('rate_limits', { key, type });
+      for (const record of records as unknown as any[]) {
+        await this.db.delete('rate_limits', record.id);
+      }
     } catch (error) {
       throw new RateLimitError('Failed to reset rate limit');
     }
@@ -160,12 +160,10 @@ export class RateLimiter {
     try {
       const now = Math.floor(Date.now() / 1000);
       const oldestTimestamp = now - Math.max(...Array.from(this.configs.values()).map(c => c.window));
-
-      await this.db.delete('rate_limits', {
-        timestamp: {
-          lt: oldestTimestamp
-        }
-      });
+      const records = await this.db.list('rate_limits', { timestamp: { lt: oldestTimestamp } });
+      for (const record of records as unknown as any[]) {
+        await this.db.delete('rate_limits', record.id);
+      }
     } catch (error) {
       throw new RateLimitError('Failed to cleanup rate limits');
     }

@@ -1,0 +1,27 @@
+// Source: https://github.com/kiegroup/drools (adapted for Stratix)
+// Dynamic Pricing Engine - Drools rules for pricing adjustments
+package com.stratix.pricing;
+
+import com.stratix.Product;  // assume a Product fact with properties price, demand, etc.
+
+rule "HighDemandPriceIncrease"
+when
+    $p : Product(demand == "HIGH", price < 100)
+then
+    double newPrice = $p.getPrice() * 1.10;
+    $p.setPrice(newPrice);
+    System.out.println("DynamicPricing: Increased price of " + $p.getName() + " to " + newPrice);
+    update($p);
+end
+
+rule "ClearancePriceDrop"
+when
+    $p : Product(stock < 10, demand == "LOW")
+then
+    double newPrice = $p.getPrice() * 0.80;
+    $p.setPrice(newPrice);
+    System.out.println("DynamicPricing: Dropped price of " + $p.getName() + " to " + newPrice);
+    update($p);
+end
+
+// Additional rules could be added for other scenarios (e.g., loyal customer discounts, time-based pricing, etc.) 

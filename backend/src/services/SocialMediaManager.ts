@@ -72,9 +72,9 @@ export class SocialMediaManager {
     scheduleTime?: string
   ): Promise<SocialMediaPost> {
     try {
-      const brandConfig = await this.db.getById('brand_configs', brandId) as BrandConfig;
+      const brandConfig = await this.db.getById('brand_configs', brandId) as unknown as BrandConfig;
       if (!brandConfig.settings.social_media_integration) {
-        throw new AppError('Social media integration is not enabled for this brand');
+        throw new AppError(403, 'SOCIAL_MEDIA_DISABLED', 'Social media integration is not enabled for this brand');
       }
 
       // Optimize content for the platform
@@ -96,7 +96,7 @@ export class SocialMediaManager {
         updated_at: new Date().toISOString()
       };
 
-      const createdPost = await this.db.create('social_media_posts', post);
+      const createdPost = await this.db.create('social_media_posts', post) as unknown as SocialMediaPost;
 
       // Schedule the post
       if (scheduleTime) {
@@ -105,9 +105,9 @@ export class SocialMediaManager {
         await this.publishPost(createdPost.id);
       }
 
-      return createdPost as SocialMediaPost;
+      return createdPost;
     } catch (error) {
-      throw new AppError('Failed to create social media post', error);
+      throw new AppError(500, 'SOCIAL_MEDIA_POST_FAILED', 'Failed to create social media post', error);
     }
   }
 
@@ -119,9 +119,9 @@ export class SocialMediaManager {
     endDate: string
   ): Promise<SocialMediaAnalytics> {
     try {
-      const brandConfig = await this.db.getById('brand_configs', brandId) as BrandConfig;
+      const brandConfig = await this.db.getById('brand_configs', brandId) as unknown as BrandConfig;
       if (!brandConfig.settings.social_media_integration) {
-        throw new AppError('Social media integration is not enabled for this brand');
+        throw new AppError(403, 'SOCIAL_MEDIA_DISABLED', 'Social media integration is not enabled for this brand');
       }
 
       const posts = await this.db.list('social_media_posts', {
@@ -146,14 +146,14 @@ export class SocialMediaManager {
       const analytics: SocialMediaAnalytics = {
         platform,
         period,
-        metrics: this.calculateMetrics(metrics),
-        trends: this.calculateTrends(metrics),
-        top_posts: this.getTopPosts(posts as SocialMediaPost[])
+        metrics: this.calculateMetrics(metrics as unknown as any[]),
+        trends: this.calculateTrends(metrics as unknown as any[]),
+        top_posts: this.getTopPosts(posts as unknown as SocialMediaPost[])
       };
 
       return analytics;
     } catch (error) {
-      throw new AppError('Failed to get social media analytics', error);
+      throw new AppError(500, 'SOCIAL_MEDIA_ANALYTICS_FAILED', 'Failed to get social media analytics', error);
     }
   }
 
@@ -188,7 +188,7 @@ export class SocialMediaManager {
         media: content.media
       };
     } catch (error) {
-      throw new AppError('Failed to optimize content for platform', error);
+      throw new AppError(500, 'SOCIAL_MEDIA_OPTIMIZATION_FAILED', 'Failed to optimize content for platform', error);
     }
   }
 
@@ -209,15 +209,15 @@ export class SocialMediaManager {
         created_at: new Date().toISOString()
       });
     } catch (error) {
-      throw new AppError('Failed to schedule post', error);
+      throw new AppError(500, 'SOCIAL_MEDIA_SCHEDULE_FAILED', 'Failed to schedule post', error);
     }
   }
 
   private async publishPost(postId: string): Promise<void> {
     try {
-      const post = await this.db.getById('social_media_posts', postId) as SocialMediaPost;
+      const post = await this.db.getById('social_media_posts', postId) as unknown as SocialMediaPost;
       if (!post) {
-        throw new AppError('Post not found');
+        throw new AppError(404, 'POST_NOT_FOUND', 'Post not found');
       }
 
       // Publish to the social media platform
@@ -247,7 +247,7 @@ export class SocialMediaManager {
         updated_at: new Date().toISOString()
       });
 
-      throw new AppError('Failed to publish post', error);
+      throw new AppError(500, 'SOCIAL_MEDIA_PUBLISH_FAILED', 'Failed to publish post', error);
     }
   }
 
@@ -268,7 +268,7 @@ export class SocialMediaManager {
         // Implement LinkedIn publishing
         break;
       default:
-        throw new AppError(`Unsupported platform: ${post.platform}`);
+        throw new AppError(400, 'UNSUPPORTED_PLATFORM', `Unsupported platform: ${post.platform}`);
     }
   }
 
@@ -276,7 +276,7 @@ export class SocialMediaManager {
     try {
       const brand = await this.db.getById('brands', brandId);
       if (!brand) {
-        throw new AppError('Brand not found');
+        throw new AppError(404, 'BRAND_NOT_FOUND', 'Brand not found');
       }
 
       const products = await this.db.list('products', {
@@ -285,9 +285,9 @@ export class SocialMediaManager {
         order: { created_at: 'desc' }
       });
 
-      return this.ai.analyzeBrandDNA(products);
+      return this.ai.analyzeBrandDNA(products as unknown as any[]);
     } catch (error) {
-      throw new AppError('Failed to get brand DNA', error);
+      throw new AppError(500, 'BRAND_DNA_FAILED', 'Failed to get brand DNA', error);
     }
   }
 

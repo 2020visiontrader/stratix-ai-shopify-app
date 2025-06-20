@@ -365,6 +365,80 @@ class ApiClient {
       url: '/health',
     });
   }
+
+  // Brand DNA
+  async brandDNAIngest(brandId: string, content: string) {
+    return this.request({ method: 'POST', url: '/api/brand-dna/ingest', data: { brandId, content } });
+  }
+  async brandDNAQuery(brandId: string, query: string, topK = 3) {
+    return this.request({ method: 'POST', url: '/api/brand-dna/query', data: { brandId, query, topK } });
+  }
+
+  // Knowledge Feed
+  async knowledgeFeedIngest() {
+    return this.request({ method: 'POST', url: '/api/knowledge-feed/ingest' });
+  }
+  async getKnowledgeFeedItems() {
+    return this.request({ method: 'GET', url: '/api/knowledge-feed/items' });
+  }
+
+  // Framework Router
+  async frameworkRewrite(content: string, count = 3) {
+    return this.request({ method: 'POST', url: '/api/framework-router/rewrite', data: { content, count } });
+  }
+
+  // Content Optimization
+  async optimizeProductDescription(productId: number) {
+    return this.request({ method: 'POST', url: '/api/content-optimizer/optimize', data: { productId } });
+  }
+
+  // Ad Generator
+  async generateAdCopy(productName: string, productDetails: string) {
+    return this.request({ method: 'POST', url: '/api/ad-generator/generate', data: { productName, productDetails } });
+  }
+
+  // Split Testing
+  async runSplitTest(userId: string, experimentKey: string, variations: string[]) {
+    return this.request({ method: 'POST', url: '/api/split-testing/run', data: { userId, experimentKey, variations } });
+  }
+
+  // Shopify Store Sync
+  async syncShopifyStore() {
+    return this.request({ method: 'GET', url: '/api/shopify-sync/sync' });
+  }
+
+  // Product Recommendations
+  async getRecommendations(userId: string) {
+    return this.request({ method: 'GET', url: `/api/recommendations/user/${userId}` });
+  }
+
+  // Insights Dashboard
+  async getInsightsMetrics() {
+    return this.request({ method: 'GET', url: '/api/insights/metrics' });
+  }
+
+  // Manual vs Autopilot Toggle
+  async setAutopilot(userId: string, enabled: boolean) {
+    return this.request({ method: 'POST', url: '/api/autopilot/set', data: { userId, enabled } });
+  }
+  async getAutopilotStatus(userId: string) {
+    return this.request({ method: 'GET', url: `/api/autopilot/status/${userId}` });
+  }
+
+  // Chatbot Assistant
+  async chatWithAssistant(conversationHistory: any[], userMessage: string) {
+    return this.request({ method: 'POST', url: '/api/chatbot/chat', data: { conversationHistory, userMessage } });
+  }
+
+  // Dynamic Pricing
+  async runDynamicPricing() {
+    return this.request({ method: 'POST', url: '/api/dynamic-pricing/run' });
+  }
+
+  // Campaign Automation (Mautic)
+  async triggerCampaignAutomation(email: string, campaignId: number) {
+    return this.request({ method: 'POST', url: '/api/campaign-automation/trigger', data: { email, campaignId } });
+  }
 }
 
 /**

@@ -23,7 +23,7 @@ async function runMigration() {
       const { error } = await supabase.rpc('exec_sql', { sql: statement });
       
       if (error) {
-        throw new AppError(`Migration failed: ${error.message}`);
+        throw new AppError(500, 'MIGRATION_FAILED', `Migration failed: ${error.message}`);
       }
     }
 

@@ -1,5 +1,5 @@
-import { FeatureManager } from '@/lib/core/FeatureManager';
 import { useCallback, useEffect, useState } from 'react';
+import { FeatureManager } from '../lib/core/FeatureManager';
 
 export interface FeatureState {
   enabled: boolean;

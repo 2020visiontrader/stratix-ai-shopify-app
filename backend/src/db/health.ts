@@ -39,7 +39,7 @@ async function checkDatabaseHealth(): Promise<HealthCheck> {
     // Check connection
     const { error: connectionError } = await supabase.from('shops').select('count').limit(1);
     if (connectionError) {
-      throw new AppError('Failed to connect to database', 500, true, connectionError);
+      throw AppError.internal('Failed to connect to database', connectionError);
     }
     health.checks.connection = true;
 
@@ -50,7 +50,7 @@ async function checkDatabaseHealth(): Promise<HealthCheck> {
       .eq('table_schema', 'public');
 
     if (tablesError) {
-      throw new AppError('Failed to get tables', 500, true, tablesError);
+      throw AppError.internal('Failed to get tables', tablesError);
     }
 
     const requiredTables = [
@@ -82,7 +82,7 @@ async function checkDatabaseHealth(): Promise<HealthCheck> {
       .eq('schemaname', 'public');
 
     if (indexesError) {
-      throw new AppError('Failed to get indexes', 500, true, indexesError);
+      throw AppError.internal('Failed to get indexes', indexesError);
     }
 
     const requiredIndexes = [
@@ -112,7 +112,7 @@ async function checkDatabaseHealth(): Promise<HealthCheck> {
       .eq('schemaname', 'public');
 
     if (policiesError) {
-      throw new AppError('Failed to get policies', 500, true, policiesError);
+      throw AppError.internal('Failed to get policies', policiesError);
     }
 
     const requiredPolicies = [

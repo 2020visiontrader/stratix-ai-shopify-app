@@ -18,18 +18,18 @@ export class AIService {
 
   constructor() {
     this.openai = new OpenAI({
-      apiKey: config.get('AI_API_KEY')
+      apiKey: config.AI_API_KEY
     });
   }
 
   async generateContent(
     prompt: string,
     type: 'title' | 'description' | 'meta_description',
-    model: string = config.get('AI_MODEL')
+    model: string = config.AI_MODEL
   ): Promise<AIResponse> {
     try {
       const systemPrompt = this.getSystemPrompt(type);
-      const messages = [
+      const messages: { role: 'system' | 'user'; content: string }[] = [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt }
       ];

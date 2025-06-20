@@ -1,37 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { apiClient } from '../src/lib/api-client';
+import type { BrandDNA } from '../src/types';
 
 export default function BrandDNAPanel() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
-  const [brandData, setBrandData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [brandData, setBrandData] = useState<BrandDNA | null>(null);
   
   useEffect(() => {
     const fetchBrandData = async () => {
+      if (!user) {
+        setError('User not authenticated.');
+        setLoading(false);
+        return;
+      }
       try {
-        // In a real app, this would fetch from an API
-        // For demo, we'll simulate a network request
-        setTimeout(() => {
-          setBrandData({
-            name: 'Your Brand',
-            values: ['Quality', 'Innovation', 'Sustainability'],
-            personality: 'Modern, Friendly, Professional',
-            voiceTone: 'Conversational with expertise',
-            targetAudience: ['Professionals', 'Ages 25-45', 'Urban'],
-            keywords: ['quality', 'sustainable', 'innovative', 'professional', 'trusted']
-          });
-          setLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error('Error loading brand DNA:', error);
+        setLoading(true);
+        setError(null);
+        // Fetch Brand DNA for the current user/brand
+        const response = await apiClient.brandDNAQuery(user.id, 'overview', 1);
+        if (response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
+          setBrandData(response.data[0]);
+        } else {
+          setError('Brand DNA not found.');
+        }
+      } catch (err: any) {
+        setError('Error loading brand DNA.');
+      } finally {
         setLoading(false);
       }
     };
-    
     fetchBrandData();
-  }, []);
+  }, [user]);
 
   const renderTabContent = () => {
     if (loading) {
@@ -44,6 +49,12 @@ export default function BrandDNAPanel() {
         </div>
       );
     }
+    if (error) {
+      return <div className="p-4 text-red-600 dark:text-red-400">{error}</div>;
+    }
+    if (!brandData) {
+      return <div className="p-4 text-gray-500 dark:text-gray-400">No Brand DNA data available.</div>;
+    }
 
     switch (activeTab) {
       case 'overview':
@@ -52,7 +63,7 @@ export default function BrandDNAPanel() {
             <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Brand Values</h3>
               <div className="mt-1 flex flex-wrap gap-2">
-                {brandData?.values.map((value: string, index: number) => (
+                {brandData.content_strategy?.themes?.map((value: string, index: number) => (
                   <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
                     {value}
                   </span>
@@ -62,18 +73,18 @@ export default function BrandDNAPanel() {
             
             <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Brand Personality</h3>
-              <p className="mt-1 text-base text-gray-800 dark:text-gray-200">{brandData?.personality}</p>
+              <p className="mt-1 text-base text-gray-800 dark:text-gray-200">{brandData.brand_voice?.personality?.join(', ')}</p>
             </div>
             
             <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Voice & Tone</h3>
-              <p className="mt-1 text-base text-gray-800 dark:text-gray-200">{brandData?.voiceTone}</p>
+              <p className="mt-1 text-base text-gray-800 dark:text-gray-200">{brandData.brand_voice?.tone}</p>
             </div>
             
             <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Target Audience</h3>
               <ul className="mt-1 list-disc list-inside text-gray-800 dark:text-gray-200">
-                {brandData?.targetAudience.map((item: string, index: number) => (
+                {brandData.target_audience?.demographics?.map((item: string, index: number) => (
                   <li key={index}>{item}</li>
                 ))}
               </ul>
@@ -100,6 +111,27 @@ export default function BrandDNAPanel() {
                 <p className="text-xs text-gray-500 dark:text-gray-400">Primary Color</p>
               </div>
             </div>
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Brand Colors</h3>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {brandData.visual_identity?.primary_colors?.map((color: string, idx: number) => (
+                  <span key={idx} className="inline-block w-6 h-6 rounded-full border border-gray-300 dark:border-gray-600" style={{ backgroundColor: color }} title={color}></span>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {brandData.visual_identity?.secondary_colors?.map((color: string, idx: number) => (
+                  <span key={idx} className="inline-block w-6 h-6 rounded-full border border-gray-300 dark:border-gray-600" style={{ backgroundColor: color }} title={color}></span>
+                ))}
+              </div>
+            </div>
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Fonts</h3>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {brandData.visual_identity?.fonts?.map((font: string, idx: number) => (
+                  <span key={idx} className="inline-block px-2 py-1 rounded bg-gray-200 dark:bg-gray-600 text-xs" style={{ fontFamily: font }}>{font}</span>
+                ))}
+              </div>
+            </div>
           </div>
         );
       
@@ -109,7 +141,7 @@ export default function BrandDNAPanel() {
             <div className="mb-4">
               <p className="text-gray-600 dark:text-gray-400 mb-2">Keywords that define your brand:</p>
               <div className="flex flex-wrap gap-2">
-                {brandData?.keywords.map((keyword: string, index: number) => (
+                {brandData.tone_preferences?.preferred_words?.map((keyword: string, index: number) => (
                   <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                     {keyword}
                   </span>

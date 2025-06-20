@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 import {
-  DatabaseResult,
-  QueryParams
+    DatabaseResult,
+    QueryParams
 } from '../types/database';
 import { AppError } from '../utils/errorHandling';
 
@@ -25,14 +25,14 @@ export class DatabaseService {
 
     // Apply filters
     if (params.filters) {
-      params.filters.forEach(filter => {
+      params.filters.forEach((filter: any) => {
         query = query.filter(filter.field, filter.operator, filter.value);
       });
     }
 
     // Apply search
     if (params.search && params.searchFields) {
-      const searchConditions = params.searchFields.map(field => 
+      const searchConditions = params.searchFields.map((field: any) => 
         `${field}.ilike.%${params.search}%`
       );
       query = query.or(searchConditions.join(','));

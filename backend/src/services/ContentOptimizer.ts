@@ -68,9 +68,9 @@ export class ContentOptimizer {
     } = {}
   ): Promise<ContentOptimizationResult> {
     try {
-      const brandConfig = await this.db.getById('brand_configs', brandId) as BrandConfig;
+      const brandConfig = await this.db.getById('brand_configs', brandId) as unknown as BrandConfig;
       if (!brandConfig.settings.content_optimization) {
-        throw new AppError('Content optimization is not enabled for this brand');
+        throw new AppError(403, 'CONTENT_OPTIMIZATION_DISABLED', 'Content optimization is not enabled for this brand');
       }
 
       const brandDNA = await this.getBrandDNA(brandId);
@@ -102,7 +102,7 @@ export class ContentOptimizer {
 
       return result;
     } catch (error) {
-      throw new AppError('Failed to optimize content', error);
+      throw new AppError(500, 'CONTENT_OPTIMIZATION_FAILED', 'Failed to optimize content', error);
     }
   }
 
@@ -110,7 +110,7 @@ export class ContentOptimizer {
     try {
       const brand = await this.db.getById('brands', brandId);
       if (!brand) {
-        throw new AppError('Brand not found');
+        throw new AppError(404, 'BRAND_NOT_FOUND', 'Brand not found');
       }
 
       // Get recent products to analyze brand DNA
@@ -120,9 +120,9 @@ export class ContentOptimizer {
         order: { created_at: 'desc' }
       });
 
-      return this.ai.analyzeBrandDNA(products);
+      return this.ai.analyzeBrandDNA(products as unknown as any[]);
     } catch (error) {
-      throw new AppError('Failed to get brand DNA', error);
+      throw new AppError(500, 'BRAND_DNA_FAILED', 'Failed to get brand DNA', error);
     }
   }
 

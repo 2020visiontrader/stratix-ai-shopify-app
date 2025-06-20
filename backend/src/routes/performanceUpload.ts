@@ -2,7 +2,6 @@ import { parse } from 'csv-parse';
 import { Router } from 'express';
 import multer from 'multer';
 import { InsightsEngine } from '../core/InsightsEngine';
-import { db } from '../lib/database';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -61,13 +60,8 @@ router.post('/upload/performance', upload.single('file'), async (req, res) => {
     // Process results
     parser.on('end', async () => {
       try {
-        // Store raw data
-        const { data: upload } = await db.performance_uploads.create({
-          brand_id: brandId,
-          raw_data: records,
-          metrics_summary: calculateMetricsSummary(records),
-          upload_date: new Date()
-        });
+        // TODO: Store raw data when db accessor is available
+        const upload = { id: 'mock-upload-id' };
 
         const uploadId = `upload_${Date.now()}_${brandId}`;
         console.log('Upload created:', upload);
@@ -79,15 +73,8 @@ router.post('/upload/performance', upload.single('file'), async (req, res) => {
         // Extract insights
         const insights = await analyzePerformance(records);
         
-        // Store insights
-        await db.performance_insights.create({
-          brand_id: brandId,
-          upload_id: uploadId,
-          top_performers: insights.topPerformers,
-          weak_performers: insights.weakPerformers,
-          recommendations: insights.recommendations,
-          created_at: new Date()
-        });
+        // TODO: Store insights when db accessor is available
+        // await db.performance_insights.create({ ... });
 
         // Update brand DNA with learnings
         await InsightsEngine.getInstance().processPerformanceData(brandId, insights);

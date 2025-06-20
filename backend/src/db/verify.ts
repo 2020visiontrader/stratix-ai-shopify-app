@@ -12,7 +12,7 @@ async function verifyDatabase() {
       .limit(1);
 
     if (connectionError) {
-      throw new AppError(`Database connection failed: ${connectionError.message}`);
+      throw new AppError(500, 'DATABASE_CONNECTION_FAILED', `Database connection failed: ${connectionError.message}`);
     }
 
     console.log('✅ Database connection successful');
@@ -36,7 +36,7 @@ async function verifyDatabase() {
         .limit(1);
 
       if (tableError) {
-        throw new AppError(`Table ${table} verification failed: ${tableError.message}`);
+        throw new AppError(500, 'TABLE_VERIFICATION_FAILED', `Table ${table} verification failed: ${tableError.message}`);
       }
 
       console.log(`✅ Table ${table} verified`);
@@ -53,7 +53,7 @@ async function verifyDatabase() {
     });
 
     if (indexError) {
-      throw new AppError(`Index verification failed: ${indexError.message}`);
+      throw new AppError(500, 'INDEX_VERIFICATION_FAILED', `Index verification failed: ${indexError.message}`);
     }
 
     console.log('✅ Database indexes verified');
@@ -69,7 +69,7 @@ async function verifyDatabase() {
     });
 
     if (triggerError) {
-      throw new AppError(`Trigger verification failed: ${triggerError.message}`);
+      throw new AppError(500, 'TRIGGER_VERIFICATION_FAILED', `Trigger verification failed: ${triggerError.message}`);
     }
 
     console.log('✅ Database triggers verified');
@@ -84,7 +84,7 @@ async function verifyDatabase() {
     });
 
     if (policyError) {
-      throw new AppError(`Policy verification failed: ${policyError.message}`);
+      throw new AppError(500, 'POLICY_VERIFICATION_FAILED', `Policy verification failed: ${policyError.message}`);
     }
 
     console.log('✅ Row Level Security policies verified');

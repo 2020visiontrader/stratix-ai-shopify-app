@@ -17,16 +17,25 @@ export class LandingPageOptimizer {
    */
   async trackPagePerformance(brandId: string, pageId: string): Promise<PerformanceMetrics> {
     // Mock implementation
+    const now = new Date();
     const metrics: PerformanceMetrics = {
-      pageId,
-      conversionRate: Math.random() * 10,
-      bounceRate: Math.random() * 100,
-      avgTimeOnPage: Math.random() * 300,
-      pageViews: Math.floor(Math.random() * 1000),
-      uniqueVisitors: Math.floor(Math.random() * 500),
-      timestamp: new Date(),
+      id: `perf-${brandId}-${pageId}`,
+      brand_id: brandId,
+      type: 'page',
+      content_id: pageId,
+      metrics: {
+        views: Math.floor(Math.random() * 1000),
+        clicks: Math.floor(Math.random() * 500),
+        conversions: Math.floor(Math.random() * 100),
+        revenue: Math.random() * 10000,
+        bounce_rate: Math.random() * 100,
+        time_on_page: Math.random() * 300,
+      },
+      period: 'daily',
+      date: now.toISOString().split('T')[0],
+      created_at: now.toISOString(),
+      updated_at: now.toISOString(),
     };
-
     return metrics;
   }
 

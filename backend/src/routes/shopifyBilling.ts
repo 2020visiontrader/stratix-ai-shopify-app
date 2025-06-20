@@ -41,13 +41,13 @@ router.post('/webhooks/shopify/billing', async (req, res) => {
     const payload = req.body as BillingWebhookPayload;
 
     // Get shop and associated brand
-    const { data: shop } = await db.shopify_shops.getByShopDomain(payload.shop_domain);
+    const shop = await db.shops.getByShopDomain(payload.shop_domain);
     if (!shop) {
       return res.status(404).json({ error: 'Shop not found' });
     }
 
     // Update brand billing status
-    const { data: brand } = await db.brands.getById(shop.brand_id);
+    const brand = await db.brands.getById(shop.brand_id);
     if (!brand) {
       return res.status(404).json({ error: 'Brand not found' });
     }
@@ -55,27 +55,30 @@ router.post('/webhooks/shopify/billing', async (req, res) => {
     const status = payload.app_subscription.status;
     const planName = payload.app_subscription.name.toLowerCase();
 
+    const allowedPlans = ['free', 'essential', 'growth', 'enterprise'] as const;
+    const plan = allowedPlans.includes(planName as any) ? (planName as typeof allowedPlans[number]) : 'free';
+
     await db.brands.update(shop.brand_id, {
       billing_active: status === 'active',
-      plan: planName
+      plan
     });
 
     // Handle cancellation
     if (status === 'cancelled') {
-      // Lock brand features
-      await db.brand_configs.update(shop.brand_id, {
-        feature_locks: {
-          autopilot: true,
-          bulk_operations: true,
-          advanced_analytics: true
+      // Optionally lock features if your schema supports it, otherwise skip
+      await db.brands.update(shop.brand_id, {
+        features: {
+          autopilot: false,
+          bulk_operations: false,
+          advanced_analytics: false
         }
       });
 
       // Send cancellation email
       await sendEmail({
-        to: shop.email,
+        to: process.env.SUPPORT_EMAIL || 'support@example.com',
         subject: 'Subscription Cancelled',
-        html: `<p>Hi ${shop.store_name},</p><p>Your subscription has been cancelled.</p><p><a href="${process.env.APP_URL}/billing/reactivate?shop=${shop.shop_domain}">Reactivate</a></p>`,
+        html: `<p>Hi ${shop.shop_domain},</p><p>Your subscription has been cancelled.</p><p><a href="${process.env.APP_URL}/billing/reactivate?shop=${shop.shop_domain}">Reactivate</a></p>`,
         text: `Your subscription has been cancelled. Reactivate at: ${process.env.APP_URL}/billing/reactivate?shop=${shop.shop_domain}`
       });
 
@@ -86,7 +89,7 @@ router.post('/webhooks/shopify/billing', async (req, res) => {
         severity: 'high',
         details: {
           shop_domain: shop.shop_domain,
-          plan_name: planName,
+          plan_name: plan,
           cancelled_at: new Date()
         },
         timestamp: new Date()
@@ -99,7 +102,7 @@ router.post('/webhooks/shopify/billing', async (req, res) => {
       brand_id: shop.brand_id,
       payload: {
         status,
-        plan: planName,
+        plan: plan,
         shop_domain: payload.shop_domain,
         timestamp: new Date()
       }

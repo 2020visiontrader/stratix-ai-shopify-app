@@ -1,5 +1,5 @@
 import { config } from '../../config';
-import { supabase } from '../../db';
+import { supabase } from '../../lib/supabase';
 import { AppError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 
@@ -14,7 +14,7 @@ export class CacheService {
   private defaultTTL: number;
 
   constructor() {
-    this.defaultTTL = config.get('CACHE_TTL');
+    this.defaultTTL = config.CACHE_TTL;
   }
 
   async get<T>(key: string): Promise<T | null> {

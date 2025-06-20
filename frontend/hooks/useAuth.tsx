@@ -9,6 +9,7 @@ export interface User {
   email: string;
   name?: string;
   role: string;
+  plan?: string | string[];
 }
 
 // Define auth context type

@@ -3,8 +3,8 @@ import { config } from '../config';
 import { logger } from '../utils/logger';
 
 // Initialize Supabase client
-const supabaseUrl = config.get('SUPABASE_URL');
-const supabaseKey = config.get('SUPABASE_SERVICE_KEY');
+const supabaseUrl = config.SUPABASE_URL;
+const supabaseKey = config.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing Supabase configuration');
@@ -201,4 +201,11 @@ export async function initializeDatabase(): Promise<void> {
     logger.error('Failed to initialize database:', error);
     throw error;
   }
+}
+
+/**
+ * Sets up the Supabase client and tests the connection.
+ */
+export async function setupSupabase(): Promise<void> {
+  await testConnection();
 }

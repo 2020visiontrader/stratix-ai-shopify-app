@@ -1,4 +1,4 @@
-import { supabase } from '../../db';
+import { supabase } from '../../lib/supabase';
 import { AppError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 
@@ -22,26 +22,26 @@ export class NotificationService {
     data?: Record<string, any>
   ): Promise<Notification> {
     try {
-      const { data: notification, error } = await supabase
+      const notification: Notification = {
+        id: crypto.randomUUID(),
+        user_id: userId,
+        type,
+        title,
+        message,
+        data,
+        read: false,
+        created_at: new Date()
+      };
+      const { error } = await supabase
         .from('notifications')
-        .insert({
-          user_id: userId,
-          type,
-          title,
-          message,
-          data,
-          read: false,
-          created_at: new Date()
-        })
-        .select()
-        .single();
+        .insert([{ ...notification, created_at: new Date().toISOString() }]);
 
       if (error) throw error;
 
       // Send real-time notification
-      await this.sendRealtimeNotification(notification as Notification);
+      await this.sendRealtimeNotification(notification);
 
-      return notification as Notification;
+      return notification;
     } catch (error) {
       logger.error('Error creating notification:', error);
       throw new AppError(500, 'NOTIFICATION_ERROR', 'Failed to create notification', error);
@@ -50,14 +50,14 @@ export class NotificationService {
 
   private async sendRealtimeNotification(notification: Notification): Promise<void> {
     try {
-      const { error } = await supabase
+      const result = await supabase
         .channel('notifications')
         .send({
           type: 'broadcast',
           event: 'notification',
           payload: notification
         });
-
+      const error = (result as any)?.error;
       if (error) throw error;
     } catch (error) {
       logger.error('Error sending realtime notification:', error);

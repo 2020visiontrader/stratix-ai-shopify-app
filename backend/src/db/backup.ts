@@ -31,7 +31,7 @@ async function backupDatabase() {
       .eq('table_schema', 'public');
 
     if (tablesError) {
-      throw new AppError('Failed to get tables', 500, true, tablesError);
+      throw AppError.internal('Failed to get tables', tablesError);
     }
 
     // Create backup file
@@ -51,7 +51,7 @@ async function backupDatabase() {
         .select('*');
 
       if (dataError) {
-        throw new AppError(`Failed to get data for table ${tableName}`, 500, true, dataError);
+        throw AppError.internal(`Failed to get data for table ${tableName}`, dataError);
       }
 
       // Write table header

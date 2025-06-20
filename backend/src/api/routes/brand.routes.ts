@@ -76,7 +76,7 @@ router.post(
 
       // Store Shopify shop association (mock)
       console.log('Would store shop association:', {
-        brand_id: brand.id || Date.now().toString(),
+        brand_id: brand.brandId || Date.now().toString(),
         shop_domain: shopifyData.shop,
         store_name: shopifyData.storeName,
         shop_owner: shopifyData.shopOwner,
@@ -84,7 +84,8 @@ router.post(
         plan: shopifyData.plan
       });
 
-      const brandWithId = { ...brand, id: brand.id || Date.now().toString() };
+      // Add 'id' property for frontend compatibility
+      const brandWithId = { ...brand, id: brand.brandId || Date.now().toString() };
       
       res.status(201).json(brandWithId);
     } catch (error) {

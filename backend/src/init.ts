@@ -1,13 +1,12 @@
 import { app } from './api';
 import { config } from './config';
-import { supabase } from './db';
-import { initializeDatabase, testConnection } from './db/setup';
+import { initializeDatabase, supabase, testConnection } from './db/setup';
 import { logger } from './utils/logger';
 
 async function initializeApp() {
   try {
     // Load environment variables
-    config.load();
+    // config.load();
 
     // Test database connection
     const isConnected = await testConnection();
@@ -19,7 +18,7 @@ async function initializeApp() {
     await initializeDatabase();
 
     // Start server
-    const port = config.get('PORT');
+    const port = config.PORT;
     app.listen(port, () => {
       logger.info(`Server is running on port ${port}`);
     });

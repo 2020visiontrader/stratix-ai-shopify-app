@@ -1,39 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { apiClient } from '../src/lib/api-client';
 
 export default function InsightsPanel() {
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInsights = async () => {
-      // In a real app, fetch from API
-      setTimeout(() => {
-        setInsights([
-          {
-            id: 1,
-            title: 'Customer Behavior',
-            description: 'Your repeat customers spend 32% more per order than first-time buyers.',
-            date: '2 days ago'
-          },
-          {
-            id: 2,
-            title: 'Product Performance',
-            description: 'Premium tier products have seen a 24% increase in conversion rate after description updates.',
-            date: '3 days ago'
-          },
-          {
-            id: 3,
-            title: 'Traffic Analysis',
-            description: 'Mobile traffic has increased by 18% but conversion rate is 5% lower than desktop.',
-            date: '5 days ago'
-          }
-        ]);
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await apiClient.getInsightsMetrics();
+        if (response.success && Array.isArray(response.data)) {
+          setInsights(response.data);
+        } else {
+          setError(response.error || 'No insights found.');
+        }
+      } catch (err: any) {
+        setError('Failed to load insights.');
+      } finally {
         setLoading(false);
-      }, 1200);
+      }
     };
-
     fetchInsights();
   }, []);
 
@@ -58,6 +49,10 @@ export default function InsightsPanel() {
               </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="text-red-600 dark:text-red-400">{error}</div>
+        ) : insights.length === 0 ? (
+          <div className="text-gray-500 dark:text-gray-400">No insights available.</div>
         ) : (
           // Insights list
           <div className="space-y-6">
@@ -71,7 +66,7 @@ export default function InsightsPanel() {
                 <div>
                   <h4 className="text-base font-medium text-gray-900 dark:text-white">{insight.title}</h4>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{insight.description}</p>
-                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Discovered {insight.date}</p>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Discovered {insight.createdAt ? new Date(insight.createdAt).toLocaleString() : ''}</p>
                 </div>
               </div>
             ))}

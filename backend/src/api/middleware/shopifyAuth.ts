@@ -1,5 +1,5 @@
-import { verify } from '@shopify/shopify-api';
 import { NextFunction, Request, Response } from 'express';
+import isVerified from 'shopify-jwt-auth-verify';
 import { config } from '../../config';
 import { AppError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
@@ -32,12 +32,7 @@ export const shopifyAuth = async (
     }
 
     // Verify the token with Shopify
-    const isValid = await verify({
-      shop,
-      accessToken: token,
-      apiKey: config.get('SHOPIFY_API_KEY'),
-      apiSecretKey: config.get('SHOPIFY_API_SECRET')
-    });
+    const isValid = isVerified(authHeader, config.SHOPIFY_API_SECRET, config.SHOPIFY_API_KEY);
 
     if (!isValid) {
       throw AppError.unauthorized('Invalid access token');

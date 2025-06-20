@@ -3,8 +3,8 @@ import { config } from '../../config';
 import { AppError } from '../../utils/errors';
 
 export const rateLimiter = rateLimit({
-  windowMs: config.get('RATE_LIMIT_WINDOW_MS'),
-  max: config.get('RATE_LIMIT_MAX'),
+  windowMs: config.RATE_LIMIT_WINDOW_MS,
+  max: config.RATE_LIMIT_MAX,
   message: {
     status: 'error',
     code: 'RATE_LIMIT_EXCEEDED',

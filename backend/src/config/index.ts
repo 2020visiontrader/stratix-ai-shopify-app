@@ -40,7 +40,7 @@ const parseConfig = () => {
 };
 
 // Create configuration object
-const config = parseConfig();
+export const config = parseConfig();
 
 // Export configuration getter
 export const getConfig = () => config;

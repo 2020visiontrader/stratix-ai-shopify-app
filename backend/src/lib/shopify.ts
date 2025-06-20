@@ -51,7 +51,7 @@ export const shopify = shopifyApp({
           shop: shop.shop_domain,
           state: '',
           isOnline: true,
-          accessToken: shop.access_token,
+          accessToken: shop.access_token ?? undefined,
           scope: process.env.SHOPIFY_SCOPES || ''
         });
       } catch (error) {
@@ -74,7 +74,15 @@ export const shopify = shopifyApp({
 
     deleteSessions: async (ids: string[]): Promise<boolean> => {
       try {
-        await Promise.all(ids.map(id => this.deleteSession(id)));
+        // Reference deleteSession directly from the current object
+        // @ts-ignore
+        const { deleteSession } = shopify.options?.sessionStorage || {};
+        if (typeof deleteSession === 'function') {
+          await Promise.all(ids.map(id => deleteSession(id)));
+        } else {
+          // fallback: use the local deleteSession function
+          await Promise.all(ids.map(id => (shopify as any).sessionStorage.deleteSession(id)));
+        }
         return true;
       } catch (error) {
         throw new ShopifyAPIError('Failed to delete sessions', error);
@@ -91,7 +99,7 @@ export const shopify = shopifyApp({
           shop: shopData.shop_domain,
           state: '',
           isOnline: true,
-          accessToken: shopData.access_token,
+          accessToken: shopData.access_token ?? undefined,
           scope: process.env.SHOPIFY_SCOPES || ''
         })];
       } catch (error) {

@@ -21,7 +21,7 @@ const ShopSchema = z.object({
   id: z.string().uuid(),
   brand_id: z.string().uuid(),
   shop_domain: z.string(),
-  access_token: z.string(),
+  access_token: z.string().nullable(),
   status: z.enum(['active', 'inactive', 'suspended']),
   created_at: z.date(),
   updated_at: z.date()
