@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        .code { background: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .success { color: green; }
+        .error { color: red; }
+        #results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Stratix Authentication Test</h1>
+    
+    <div>
+        <h2>Test Demo Login</h2>
+        <button id="demoLoginBtn">Login as Demo User</button>
+        <button id="checkStatusBtn">Check Auth Status</button>
+        <button id="logoutBtn">Logout</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        // Helper function to log results
+        function logResult(title, data, isError = false) {
+            const resultsDiv = document.getElementById('results');
+            
+            const resultEntry = document.createElement('div');
+            resultEntry.innerHTML = `
+                <h3 class="${isError ? 'error' : 'success'}">${title}</h3>
+                <pre class="code">${JSON.stringify(data, null, 2)}</pre>
+                <hr>
+            `;
+            
+            resultsDiv.prepend(resultEntry);
+        }
+
+        // Demo login function
+        async function performDemoLogin() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: 'demo@example.com', 
+                        password: 'password' 
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    logResult('Demo Login Successful', data);
+                } else {
+                    logResult('Demo Login Failed', data, true);
+                }
+            } catch (error) {
+                logResult('Demo Login Error', { message: error.message, stack: error.stack }, true);
+            }
+        }
+
+        // Check authentication status
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/status', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    logResult('Auth Status Check', data);
+                } else {
+                    logResult('Auth Status Check Failed', data, true);
+                }
+            } catch (error) {
+                logResult('Auth Status Error', { message: error.message, stack: error.stack }, true);
+            }
+        }
+
+        // Logout function
+        async function performLogout() {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    logResult('Logout Successful', data);
+                } else {
+                    logResult('Logout Failed', data, true);
+                }
+            } catch (error) {
+                logResult('Logout Error', { message: error.message, stack: error.stack }, true);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('demoLoginBtn').addEventListener('click', performDemoLogin);
+        document.getElementById('checkStatusBtn').addEventListener('click', checkAuthStatus);
+        document.getElementById('logoutBtn').addEventListener('click', performLogout);
+
+        // Check status on page load
+        window.addEventListener('load', checkAuthStatus);
+    </script>
+</body>
+</html>

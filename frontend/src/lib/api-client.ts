@@ -76,6 +76,7 @@ export interface PerformanceMetrics {
 class ApiClient {
   private client: AxiosInstance;
   private baseURL: string;
+  private ngrokUrl: string | null = null;
 
   constructor() {
     this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -87,6 +88,9 @@ class ApiClient {
         'Content-Type': 'application/json',
       },
     });
+
+    // Try to detect ngrok URL on initialization
+    this.detectNgrokUrl();
 
     this.setupInterceptors();
   }
@@ -138,6 +142,43 @@ class ApiClient {
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }
+  }
+
+  // Detect and switch to ngrok URL if available
+  private async detectNgrokUrl() {
+    try {
+      // First try to get ngrok URL from the current backend
+      const response = await fetch(`${this.baseURL}/api/ngrok-url`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.url && data.available) {
+          this.ngrokUrl = data.url;
+          console.log('🌐 Detected ngrok URL:', this.ngrokUrl);
+          
+          // Update the axios client to use ngrok URL
+          this.client.defaults.baseURL = this.ngrokUrl!;
+          console.log('✅ API client switched to ngrok URL');
+        }
+      }
+    } catch (error) {
+      // Silently fail - ngrok might not be available
+      console.log('ℹ️ ngrok URL detection failed (this is normal if ngrok is not running)');
+    }
+  }
+
+  // Public method to get current API URL
+  public getCurrentApiUrl(): string {
+    return this.ngrokUrl || this.baseURL;
+  }
+
+  // Public method to manually refresh ngrok URL
+  public async refreshNgrokUrl(): Promise<boolean> {
+    await this.detectNgrokUrl();
+    return !!this.ngrokUrl;
   }
 
   // Generic request method
@@ -324,6 +365,127 @@ class ApiClient {
       url: '/health',
     });
   }
+}
+
+/**
+ * Enhanced fetch wrapper with authentication support and error handling
+ */
+export async function fetchWithAuth<T = any>(
+  url: string,
+  options: RequestInit = {},
+  config: {
+    showSuccessToast?: boolean;
+    showErrorToast?: boolean;
+    successMessage?: string;
+    errorMessage?: string;
+    redirectToLogin?: boolean;
+  } = {}
+): Promise<{ data: T | null; error: Error | null; status: number }> {
+  const {
+    showSuccessToast = false,
+    showErrorToast = true,
+    successMessage = 'Operation successful',
+    errorMessage = 'An error occurred',
+    redirectToLogin = true,
+  } = config;
+
+  try {
+    // Get token from cookie
+    const token = getCookie('session') as string || getCookie('auth_token') as string || null;
+
+    // Create headers with authorization if token exists
+    const headers = new Headers(options.headers);
+    if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+      headers.set('Content-Type', 'application/json');
+    }
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    // Execute fetch
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    // Handle unauthorized (session expired, etc.)
+    if (response.status === 401 && redirectToLogin) {
+      if (typeof window !== 'undefined') {
+        deleteCookie('auth_token');
+        deleteCookie('session');
+        window.location.href = '/auth/login';
+      }
+      return { data: null, error: new Error('Unauthorized'), status: 401 };
+    }
+
+    // Parse response data
+    let data;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
+
+    // Handle successful response
+    if (response.ok) {
+      if (showSuccessToast && typeof window !== 'undefined') {
+        // If react-hot-toast is available, use it
+        try {
+          const toast = require('react-hot-toast');
+          toast.success(successMessage);
+        } catch (e) {
+          console.log(successMessage);
+        }
+      }
+      return { data, error: null, status: response.status };
+    }
+
+    // Handle error response
+    const errorMsg = data.error || data.message || 'An unknown error occurred';
+    const error = new Error(errorMsg);
+    
+    if (showErrorToast && typeof window !== 'undefined') {
+      try {
+        const toast = require('react-hot-toast');
+        toast.error(`${errorMessage}: ${errorMsg}`);
+      } catch (e) {
+        console.error(`${errorMessage}: ${errorMsg}`);
+      }
+    }
+    
+    return { data: null, error, status: response.status };
+  } catch (err) {
+    // Handle network errors or other exceptions
+    const error = err instanceof Error ? err : new Error('Network error');
+    
+    if (showErrorToast && typeof window !== 'undefined') {
+      try {
+        const toast = require('react-hot-toast');
+        toast.error(`${errorMessage}: ${error.message}`);
+      } catch (e) {
+        console.error(`${errorMessage}: ${error.message}`);
+      }
+    }
+    
+    return { data: null, error, status: 0 };
+  }
+}
+
+// Standalone fetch function with auth for use in Next.js API routes
+export async function fetchWithAuthLegacy(url: string, options: RequestInit = {}) {
+  const token = getCookie('auth_token') as string || null;
+  
+  const headers = new Headers(options.headers || {});
+  
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  
+  return fetch(url, {
+    ...options,
+    headers
+  });
 }
 
 // Export singleton instance

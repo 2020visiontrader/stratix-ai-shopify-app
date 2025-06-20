@@ -12,7 +12,7 @@ const logFormat = printf(({ level, message, timestamp, ...metadata }) => {
 });
 
 export const logger = winston.createLogger({
-  level: config.get('LOG_LEVEL') || 'info',
+  level: config.LOG_LEVEL || 'info',
   format: combine(
     timestamp(),
     colorize(),

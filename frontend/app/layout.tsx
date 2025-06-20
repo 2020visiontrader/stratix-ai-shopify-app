@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import ClientAuthProvider from '../components/ClientAuthProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full bg-gradient-to-br from-purple-900 to-purple-800 text-white`}>
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <ClientAuthProvider>
+          <main className="min-h-screen">
+            {children}
+          </main>
+        </ClientAuthProvider>
       </body>
     </html>
   );

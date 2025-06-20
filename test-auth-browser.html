@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    <div id="status"></div>
+    <br>
+    <button onclick="testLogin()">Test Demo Login</button>
+    <button onclick="checkStatus()">Check Auth Status</button>
+    <br><br>
+    <div id="result"></div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+
+        async function testLogin() {
+            statusDiv.innerHTML = 'Testing login...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'demo@example.com',
+                        password: 'password'
+                    }),
+                    credentials: 'include' // Important for cookies
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusDiv.innerHTML = 'Login successful!';
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    statusDiv.innerHTML = 'Login failed: ' + response.status;
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = 'Login error: ' + error.message;
+                resultDiv.innerHTML = error.stack;
+            }
+        }
+
+        async function checkStatus() {
+            statusDiv.innerHTML = 'Checking auth status...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/status', {
+                    method: 'GET',
+                    credentials: 'include' // Important for cookies
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusDiv.innerHTML = 'Status check successful!';
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    statusDiv.innerHTML = 'Status check failed: ' + response.status;
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = 'Status check error: ' + error.message;
+                resultDiv.innerHTML = error.stack;
+            }
+        }
+
+        // Check status on page load
+        window.onload = checkStatus;
+    </script>
+</body>
+</html>

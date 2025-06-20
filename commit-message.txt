@@ -1,0 +1,21 @@
+Complete major refactoring and enhancement of Stratix AI Shopify app
+
+This commit includes:
+- Refactored backend for modularity with TypeScript Node.js
+- Implemented frontend React/Tailwind dashboard with Next.js
+- Added comprehensive Shopify integration with Admin API support
+- Implemented robust authentication system with session management
+- Created Brand DNA, Campaign Management, and Segment features
+- Added analytics dashboard with metrics and insights
+- Implemented A/B testing engine and UI
+- Created dynamic recommendations panel
+- Added API routes for all major features
+- Improved error handling and loading states
+- Added theme support (dark/light/system)
+- Fixed authentication middleware and session cookie handling
+- Enhanced API proxy from frontend to backend
+- Added demo login capability
+- Created end-to-end testing tools and scripts
+- Fixed all major TypeScript errors and import issues
+- Ensured Supabase compatibility
+- Added comprehensive documentation
