@@ -140,31 +140,33 @@ export default function Login() {
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setError('Social login not implemented yet')}
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
-                >
-                  <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84" />
-                  </svg>
-                  <span className="ml-2">Twitter</span>
-                </button>
-              </div>
-
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setError('Social login not implemented yet')}
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
-                >
-                  <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 0C4.477 0 0 4.477 0 10c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.268 2.75 1.026A9.578 9.578 0 0110 4.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.026 2.747-1.026.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.934.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C17.14 18.163 20 14.418 20 10c0-5.523-4.477-10-10-10z" clipRule="evenodd" />
-                  </svg>
-                  <span className="ml-2">GitHub</span>
-                </button>
-              </div>
+              <Link
+                href="/api/auth/google"
+                className="inline-flex w-full justify-center rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <span className="sr-only">Sign in with Google</span>
+                <svg className="h-5 w-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z" fill="#EA4335"/>
+                  <path d="M23.49 12.275C23.49 11.49 23.415 10.73 23.3 10H12V14.51H18.47C18.18 15.99 17.34 17.25 16.08 18.1L19.945 21.1C22.2 19.01 23.49 15.92 23.49 12.275Z" fill="#4285F4"/>
+                  <path d="M5.26498 14.2949C5.02498 13.5699 4.88501 12.7999 4.88501 11.9999C4.88501 11.1999 5.01998 10.4299 5.26498 9.7049L1.275 6.60986C0.46 8.22986 0 10.0599 0 11.9999C0 13.9399 0.46 15.7699 1.28 17.3899L5.26498 14.2949Z" fill="#FBBC05"/>
+                  <path d="M12.0004 24.0001C15.2404 24.0001 17.9654 22.935 19.9454 21.095L16.0804 18.095C15.0054 18.82 13.6204 19.25 12.0004 19.25C8.87043 19.25 6.22043 17.14 5.27045 14.295L1.28046 17.39C3.25046 21.31 7.31044 24.0001 12.0004 24.0001Z" fill="#34A853"/>
+                </svg>
+                <span className="ml-2">Continue with Google</span>
+              </Link>
+              
+              <Link
+                href="/api/auth/shopify"
+                className="inline-flex w-full justify-center rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <span className="sr-only">Sign in with Shopify</span>
+                <svg className="h-5 w-5" viewBox="0 0 109.5 124.5" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M74.7,14.8c0-0.6,0-1.3,0-2.2c-0.1-3-1-5.6-2.5-8.2C70,1.4,66.6,0,62.8,0c-0.7,0-1.4,0.1-2.1,0.2 c-0.1,0-0.6,0.1-0.6,0.1c-0.5-0.7-1.3-1.2-2-1.8C55.8-3.1,52.7-0.9,50,0.9c-8.5,5.6-12.1,15.9-13.4,25.7c-5.5,1.7-9.4,2.9-9.4,2.9 c-2.8,0.9-2.9,0.9-3.2,3.7c-0.2,2.1-6.9,53-6.9,53l51.6,9.8l27.8-7L74.7,14.8z M62.5,10.5c-0.8,0.3-1.7,0.5-2.8,0.8 c0-1.6-0.2-3.8-0.6-6.5C61.8,5.6,62.4,8.6,62.5,10.5z M56.5,12c-1.9,0.6-3.9,1.2-6,1.9c0.6-4.5,1.9-8.9,4.3-13.2 C55.7,4.3,56.3,8.2,56.5,12z M50.1,4.2c1-2.3,2.4-4.2,4.2-5.5C57.9-3.6,61.9-0.1,65,4C58.9,6,53.3,7.9,48.1,9.7 C48.7,7.6,49.3,5.8,50.1,4.2z" fill="#95BF47"/>
+                  <path d="M74.7,14.8c0-0.6,0-1.3,0-2.2c-0.1-3-1-5.6-2.5-8.2c-2.2-3-5.6-4.4-9.4-4.4c-0.7,0-1.4,0.1-2.1,0.2 c-0.1,0-0.6,0.1-0.6,0.1c-0.5-0.7-1.3-1.2-2-1.8C55.8-3.1,52.7-0.9,50,0.9c-8.5,5.6-12.1,15.9-13.4,25.7c-5.5,1.7-9.4,2.9-9.4,2.9 c-2.8,0.9-2.9,0.9-3.2,3.7c-0.2,2.1-6.9,53-6.9,53l51.6,9.8V0C65.6,0,72.2,0,74.7,14.8z M56.5,12c-1.9,0.6-3.9,1.2-6,1.9 c0.6-4.5,1.9-8.9,4.3-13.2C55.7,4.3,56.3,8.2,56.5,12z M50.1,4.2c1-2.3,2.4-4.2,4.2-5.5C57.9-3.6,61.9-0.1,65,4 C58.9,6,53.3,7.9,48.1,9.7C48.7,7.6,49.3,5.8,50.1,4.2z" fill="#5E8E3E"/>
+                  <path d="M95.6,124.5V77.1l-23.1,5.6v41.9L95.6,124.5L95.6,124.5z M75.1,109.8l7.5-2.2v-7.3l-7.5,1.8V109.8z" fill="#FFFFFF"/>
+                  <path d="M102.2,54.4c-2-0.8-7.2-1.3-7.2-1.3s-10-1-11.1-1.1c-1.1-0.1-2.1-0.1-3.2,0c-1.2,0.2-3.5,1-3.5,1s-2.6,0.8-3.9,1.2 c-0.3,0.1-0.6,0.2-0.9,0.3v89.1l23.1-5.6V83.6c0,0,6.3-1.7,9-2.4c2.4-0.6,5.2-1.2,5.2-4.8C109.8,69.9,107.1,56.4,102.2,54.4z" fill="#FFFFFF"/>
+                </svg>
+                <span className="ml-2">Connect with Shopify</span>
+              </Link>
             </div>
             
             <div className="mt-6">

@@ -13,8 +13,10 @@ import trialsRoutes from './api/routes/trials.routes';
 
 // Import services
 import { apiRateLimit } from './api/middleware/rateLimit';
+import { StratixEngineIntegration } from './lib/core/StratixEngineIntegration';
 import { authMiddleware } from './middleware/auth';
 import { DatabaseService } from './services/DatabaseService';
+import { logger } from './utils/logger';
 
 // Load environment variables
 dotenv.config();
@@ -260,13 +262,26 @@ process.on('SIGINT', async () => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Stratix AI Backend Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 CORS Origin: ${corsOptions.origin}`);
   
   // Run database cleanup on startup
   dbService.cleanupExpiredData().catch(console.error);
+  
+  // Initialize Stratix Engine
+  try {
+    const stratixEngine = StratixEngineIntegration.getInstance();
+    const initialized = await stratixEngine.initialize();
+    if (initialized) {
+      logger.info('✅ Stratix Engine Integration initialized successfully');
+    } else {
+      logger.error('❌ Failed to initialize Stratix Engine Integration');
+    }
+  } catch (error) {
+    logger.error(`❌ Error initializing Stratix Engine Integration: ${error instanceof Error ? error.message : String(error)}`);
+  }
 });
 
 export default app;

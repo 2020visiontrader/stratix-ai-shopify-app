@@ -73,13 +73,146 @@ export interface PerformanceMetrics {
   period: string;
 }
 
+// Memory Engine Types
+export interface MemoryRecord {
+  id: string;
+  brandId: string;
+  type: string;
+  timestamp: Date;
+  data: any;
+  metadata: any;
+}
+
+export interface LearningLog {
+  id: string;
+  brandId: string;
+  timestamp: Date;
+  learningType: 'positive' | 'negative';
+  source: 'user_feedback' | 'test_result' | 'engagement';
+  data: any;
+  impact: number;
+}
+
+// Book Ingestion Types
+export interface BookSource {
+  id: string;
+  title: string;
+  author?: string;
+  url?: string;
+  categories: string[];
+  relevance: number;
+  summary?: string;
+  processingStatus: 'pending' | 'processing' | 'completed' | 'failed';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface BookChunk {
+  id: string;
+  bookId: string;
+  content: string;
+  chunkIndex: number;
+}
+
+// Test & Deploy Types
+export interface TestResult {
+  id: string;
+  testId: string;
+  brandId: string;
+  startTime: Date;
+  endTime?: Date;
+  status: 'pending' | 'running' | 'completed' | 'cancelled' | 'failed';
+  variants: any[];
+  metadata: any;
+  insights: string[];
+}
+
+export interface Deployment {
+  id: string;
+  deploymentId: string;
+  brandId: string;
+  testId?: string;
+  variantId?: string;
+  platform: string;
+  timestamp: Date;
+  status: 'pending' | 'success' | 'failed';
+  error?: string;
+  details?: any;
+}
+
+// Visual Builder Types
+export interface VisualTemplate {
+  id: string;
+  brandId: string;
+  name: string;
+  description?: string;
+  content: any;
+  thumbnail?: string;
+  category?: string;
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+export interface LoginRequest {
+  email: string;
+  shopDomain: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    shopDomain: string;
+    role: string;
+  };
+}
+
+// Analysis Types
+export interface AnalysisRequest {
+  content: string;
+  type: 'product' | 'ad' | 'landing_page';
+  framework?: string;
+}
+
+export interface AnalysisResponse {
+  id: string;
+  suggestions: string[];
+  frameworks: string[];
+  confidence: number;
+  improvements: Array<{
+    type: string;
+    description: string;
+    impact: 'low' | 'medium' | 'high';
+  }>;
+}
+
+// Product Types
+export interface Product {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  images: string[];
+  shopifyId: string;
+}
+
+// Performance Types
+export interface PerformanceMetrics {
+  views: number;
+  clicks: number;
+  conversions: number;
+  revenue: number;
+  period: string;
+}
+
 class ApiClient {
   private client: AxiosInstance;
   private baseURL: string;
   private ngrokUrl: string | null = null;
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
     
     this.client = axios.create({
       baseURL: this.baseURL,
@@ -433,6 +566,63 @@ class ApiClient {
   // Dynamic Pricing
   async runDynamicPricing() {
     return this.request({ method: 'POST', url: '/api/dynamic-pricing/run' });
+  }
+
+  // Visual Builder - Prompt to Code
+  async promptToCode(prompt: string, context: { brandId: string; currentHtml?: string; currentCss?: string; selectionContext?: string }) {
+    return this.request({ method: 'POST', url: '/api/visual-builder/prompt-to-code', data: { prompt, ...context } });
+  }
+  
+  // Memory Engine
+  async searchMemories(brandId: string, query: string, type?: string, limit: number = 10) {
+    return this.request({ method: 'GET', url: '/api/memory/search', params: { brandId, query, type, limit } });
+  }
+  
+  async storeMemory(brandId: string, type: string, data: any, metadata: any = {}) {
+    return this.request({ method: 'POST', url: '/api/memory', data: { brandId, type, data, metadata } });
+  }
+  
+  async getLearningLogs(brandId: string, learningType?: string, source?: string, limit: number = 20) {
+    return this.request({ method: 'GET', url: '/api/memory/learning-logs', params: { brandId, learningType, source, limit } });
+  }
+  
+  // Book Ingestion
+  async ingestBook(title: string, url: string, author?: string, categories?: string[]) {
+    return this.request({ method: 'POST', url: '/api/books', data: { title, url, author, categories } });
+  }
+  
+  async searchBookContent(query: string, categories?: string[], limit: number = 5) {
+    return this.request({ method: 'GET', url: '/api/books/search', params: { query, categories, limit } });
+  }
+  
+  async getBookSources(page: number = 1, limit: number = 10) {
+    return this.request({ method: 'GET', url: '/api/books', params: { page, limit } });
+  }
+  
+  // Test & Deploy Agents
+  async runTest(brandId: string, testConfig: any) {
+    return this.request({ method: 'POST', url: '/api/test-deploy/test', data: { brandId, testConfig } });
+  }
+  
+  async getTestResults(brandId: string, status?: string, page: number = 1, limit: number = 10) {
+    return this.request({ method: 'GET', url: '/api/test-deploy/tests', params: { brandId, status, page, limit } });
+  }
+  
+  async deploy(brandId: string, testId?: string, variantId?: string, platform: string = 'shopify', options?: any) {
+    return this.request({ method: 'POST', url: '/api/test-deploy/deploy', data: { brandId, testId, variantId, platform, options } });
+  }
+  
+  async getDeployments(brandId: string, platform?: string, page: number = 1, limit: number = 10) {
+    return this.request({ method: 'GET', url: '/api/test-deploy/deployments', params: { brandId, platform, page, limit } });
+  }
+  
+  // Visual Templates
+  async saveVisualTemplate(brandId: string, template: { name: string; description?: string; content: any; category?: string; tags?: string[] }) {
+    return this.request({ method: 'POST', url: '/api/visual-builder/templates', data: { brandId, ...template } });
+  }
+  
+  async getVisualTemplates(brandId: string, category?: string, page: number = 1, limit: number = 10) {
+    return this.request({ method: 'GET', url: '/api/visual-builder/templates', params: { brandId, category, page, limit } });
   }
 
   // Campaign Automation (Mautic)

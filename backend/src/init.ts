@@ -1,38 +1,23 @@
-import { app } from './api';
-import { config } from './config';
-import { initializeDatabase, supabase, testConnection } from './db/setup';
+import { startServer } from './server';
 import { logger } from './utils/logger';
 
-async function initializeApp() {
-  try {
-    // Load environment variables
-    // config.load();
+// Initialize and start the server
+startServer().catch(error => {
+  logger.error(`Failed to start server: ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
+});
 
-    // Test database connection
-    const isConnected = await testConnection();
-    if (!isConnected) {
-      throw new Error('Failed to connect to database');
-    }
-
-    // Initialize database
-    await initializeDatabase();
-
-    // Start server
-    const port = config.PORT;
-    app.listen(port, () => {
-      logger.info(`Server is running on port ${port}`);
-    });
-
-    // Handle graceful shutdown
-    process.on('SIGTERM', async () => {
-      logger.info('SIGTERM received. Shutting down gracefully...');
-      await supabase.auth.signOut();
+// Handle graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received. Shutting down gracefully...');
+  // Perform cleanup operations here
+  process.exit(0);
+});
       process.exit(0);
     });
 
     process.on('SIGINT', async () => {
       logger.info('SIGINT received. Shutting down gracefully...');
-      await supabase.auth.signOut();
       process.exit(0);
     });
 
@@ -55,4 +40,4 @@ async function initializeApp() {
 }
 
 // Start the application
-initializeApp(); 
+initializeApp();

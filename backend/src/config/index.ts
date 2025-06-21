@@ -11,7 +11,7 @@ dotenv.config({
 // Configuration schema
 const configSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.string().transform(Number).default('3000'),
+  PORT: z.string().transform(Number).default('3002'),
   SUPABASE_URL: z.string().url(),
   SUPABASE_ANON_KEY: z.string(),
   SHOPIFY_API_KEY: z.string(),

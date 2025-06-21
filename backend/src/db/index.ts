@@ -1,4 +1,5 @@
 import { runMigration } from './migrate';
+import { testPrismaConnection } from './prisma';
 import { setupSupabase } from './setup';
 import { verifyDatabase } from './verify';
 
@@ -8,6 +9,9 @@ async function initializeDatabase() {
     
     // Run setup first
     await setupSupabase();
+    
+    // Test Prisma connection
+    await testPrismaConnection();
     
     // Then run migrations
     await runMigration();
@@ -27,4 +31,7 @@ if (require.main === module) {
   initializeDatabase();
 }
 
+export { getPrismaClient } from './prisma';
+export { supabase } from './setup';
 export { initializeDatabase };
+
